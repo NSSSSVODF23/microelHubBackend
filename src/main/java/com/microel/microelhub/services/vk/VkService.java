@@ -18,13 +18,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.concurrent.Executors;
 
-import static java.lang.Thread.sleep;
-
 @Slf4j
 @Service
 public class VkService implements MessageSenderWrapper {
-    private static final int GROUP_ID = 216823449;
-    private static final String GROUP_TOKEN = "vk1.a.BM9kGZECISQ_u8Ow6l9mz5b8BzYOIO67Ni05Bk0MBGycTmJ_tcckyXPn90zV106Iu9_voHvLLpTW1OTjOrImDhi1qKiI9Aj2vQBNz_x8Jy4edGEScFn1pp-Xl76SM4MD1dCwEpGa3Lp9POOAghKkapOu4KzgcFqENN4HFwlbOkOnLyynKjPo9BkLVE8cREIwrHT5fmEOGa2zdSCllxFbFg";
     private final VkApiClient api;
     private GroupActor groupActor;
     private VkUpdateHandler pollHandler;
@@ -45,7 +41,7 @@ public class VkService implements MessageSenderWrapper {
         Configuration configuration = configurationDispatcher.getLastConfig();
 
         if (configuration == null || configuration.getVkGroupId() == null || configuration.getVkGroupToken() == null) {
-            statedApiService.logStatusChange(Platform.VK,"Реквизиты для инициализации API пусты");
+            statedApiService.logStatusChange(Platform.VK, "Реквизиты для инициализации API пусты");
             return;
         }
 
@@ -54,7 +50,7 @@ public class VkService implements MessageSenderWrapper {
         try {
             api.groups().getTokenPermissions(groupActor).execute();
         } catch (ApiException | ClientException e) {
-            statedApiService.logStatusChange(Platform.VK,"API не удалось зарегистрировать, нет доступа к интернету или реквизиты не верны");
+            statedApiService.logStatusChange(Platform.VK, "API не удалось зарегистрировать, нет доступа к интернету или реквизиты не верны");
             return;
         }
 
@@ -63,7 +59,7 @@ public class VkService implements MessageSenderWrapper {
                     .messageNew(true).messageDeny(true).messageAllow(true).messageEdit(true)
                     .execute();
         } catch (Exception e) {
-            statedApiService.logStatusChange(Platform.VK,"Не удалось сконфигурировать VK API");
+            statedApiService.logStatusChange(Platform.VK, "Не удалось сконфигурировать VK API");
             return;
         }
 
@@ -74,7 +70,7 @@ public class VkService implements MessageSenderWrapper {
             } catch (Exception ignored) {
             }
         });
-        statedApiService.logStatusChange(Platform.VK,"API инициализирован успешно");
+        statedApiService.logStatusChange(Platform.VK, "API инициализирован успешно");
     }
 
     private Integer getRandomId() {

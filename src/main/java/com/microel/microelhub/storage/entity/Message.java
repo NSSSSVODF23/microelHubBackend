@@ -4,6 +4,8 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -28,6 +30,9 @@ public class Message {
     @ManyToOne
     @JoinColumn(name = "f_chat_id")
     private Chat chat;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable()
+    private Set<MessageAttachment> attachments;
 
     @Override
     public String toString() {

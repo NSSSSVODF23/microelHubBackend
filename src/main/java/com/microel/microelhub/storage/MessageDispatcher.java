@@ -6,6 +6,7 @@ import com.microel.microelhub.common.UpdateType;
 import com.microel.microelhub.common.chat.Platform;
 import com.microel.microelhub.storage.entity.Chat;
 import com.microel.microelhub.storage.entity.Message;
+import com.microel.microelhub.storage.entity.MessageAttachment;
 import com.microel.microelhub.storage.repository.MessageRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -28,26 +30,27 @@ public class MessageDispatcher {
         this.chatWS = chatWS;
     }
 
-    public Message add(String message, String chatMsgId, Chat chat, Boolean isOperatorMsg) {
+    public Message add(String message, String chatMsgId, Chat chat, Boolean isOperatorMsg, MessageAttachment ...messageAttachment) {
         return messageRepository.save(Message.builder()
                 .text(message)
                 .timestamp(Timestamp.from(Instant.now()))
                 .edited(false)
                 .operatorMsg(isOperatorMsg)
                 .operator(chat.getOperator())
+                .attachments(Set.of(messageAttachment))
                 .chatMsgId(chatMsgId)
                 .chat(chat)
                 .build());
     }
 
-    public Message add(String message, String chatMsgId, Chat chat) {
-        return add(message, chatMsgId, chat, false);
+    public Message add(String message, String chatMsgId, Chat chat, MessageAttachment ...messageAttachment) {
+        return add(message, chatMsgId, chat, false, messageAttachment);
     }
 
-    public Message add(String message, String chatMsgId, String userId, String phone, String name, Platform platform) {
+    public Message add(String message, String chatMsgId, String userId, String phone, String name, Platform platform, MessageAttachment ...messageAttachment) {
         Chat newChat = chatDispatcher.create(userId, phone, name, platform);
         chatWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, newChat));
-        return add(message, chatMsgId, newChat);
+        return add(message, chatMsgId, newChat, messageAttachment);
     }
 
     public Message edit(String message, String chatMsgId, Chat chat) throws Exception {
@@ -76,6 +79,14 @@ public class MessageDispatcher {
     public Page<Message> getMessagesFromChat(String chatId, Long offset, Integer limit) throws Exception {
         try {
             return messageRepository.findByChat_ChatId(UUID.fromString(chatId), new OffsetRequest(offset, limit, Sort.by(Sort.Direction.DESC, "timestamp")));
+        } catch (IllegalArgumentException e) {
+            throw new Exception("Не верный UUID");
+        }
+    }
+
+    public Page<Message> getMessagesFromUser(String userId, Platform platform, Long offset, Integer limit) throws Exception {
+        try {
+            return messageRepository.findByChat_User_UserIdAndChat_User_Platform(userId, platform, new OffsetRequest(offset, limit, Sort.by(Sort.Direction.DESC, "timestamp")));
         } catch (IllegalArgumentException e) {
             throw new Exception("Не верный UUID");
         }

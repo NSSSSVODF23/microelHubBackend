@@ -17,6 +17,7 @@ import com.microel.microelhub.storage.OperatorDispatcher;
 import com.microel.microelhub.storage.entity.Chat;
 import com.microel.microelhub.storage.entity.Configuration;
 import com.microel.microelhub.storage.entity.Message;
+import com.microel.microelhub.storage.entity.MessageAttachment;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -77,13 +78,25 @@ public class MessageAggregatorService {
         }
     }
 
+    public void nextMessageFromUser(String userId, String text, String chatMsgId, String phone, String name, Platform platform, MessageAttachment ...messageAttachment) {
+        Chat chat = chatDispatcher.getLastByUserId(userId, platform);
+        if (chat != null && chat.getActive()) {
+            chatDispatcher.updateLastMessageStamp(chat);
+            chatMessageWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, messageDispatcher.add(text, chatMsgId, chat, messageAttachment)));
+        } else {
+            Message message = messageDispatcher.add(text, chatMsgId, userId, phone, name, platform, messageAttachment);
+            chatMessageWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, message));
+            sendGreetingMessage(message.getChat().getChatId().toString(), platform);
+        }
+    }
+
     public void nextMessageFromUser(String userId, String text, String chatMsgId, String phone, String name, Platform platform) {
         Chat chat = chatDispatcher.getLastByUserId(userId, platform);
         if (chat != null && chat.getActive()) {
             chatDispatcher.updateLastMessageStamp(chat);
-            chatMessageWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, messageDispatcher.add(text, chatMsgId, chat)));
+            chatMessageWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, messageDispatcher.add(text, chatMsgId, chat, new MessageAttachment[]{})));
         } else {
-            Message message = messageDispatcher.add(text, chatMsgId, userId, phone, name, platform);
+            Message message = messageDispatcher.add(text, chatMsgId, userId, phone, name, platform, new MessageAttachment(){});
             chatMessageWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, message));
             sendGreetingMessage(message.getChat().getChatId().toString(), platform);
         }
@@ -185,4 +198,5 @@ public class MessageAggregatorService {
                 throw new Exception("Платформа не найдена");
         }
     }
+
 }

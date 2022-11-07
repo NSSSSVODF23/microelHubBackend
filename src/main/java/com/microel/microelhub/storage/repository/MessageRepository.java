@@ -15,7 +15,9 @@ import java.util.UUID;
 public interface MessageRepository extends JpaRepository<Message, Long>, JpaSpecificationExecutor<Message> {
     Message findTopByChat_User_UserIdAndChatMsgIdAndChat_User_PlatformOrderByTimestampDesc(String userId, String chatMsgId, Platform platform);
 
-    Page<Message> findByChat_ChatId(UUID chatId, Pageable timestamp);
+    Page<Message> findByChat_ChatId(UUID chatId, Pageable pageable);
 
     Optional<Message> findTopByChatAndChatMsgId(Chat chat, String chatMsgId);
+
+    Page<Message> findByChat_User_UserIdAndChat_User_Platform(String userId, Platform platform, Pageable pageable);
 }

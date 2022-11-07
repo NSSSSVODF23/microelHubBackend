@@ -5,8 +5,6 @@ import com.microel.microelhub.services.MessageAggregatorService;
 import com.vk.api.sdk.callback.longpoll.CallbackApiLongPoll;
 import com.vk.api.sdk.client.VkApiClient;
 import com.vk.api.sdk.client.actors.GroupActor;
-import com.vk.api.sdk.objects.callback.MessageAllow;
-import com.vk.api.sdk.objects.callback.MessageDeny;
 import com.vk.api.sdk.objects.messages.Message;
 import com.vk.api.sdk.objects.users.responses.GetResponse;
 
@@ -28,25 +26,26 @@ public class VkUpdateHandler extends CallbackApiLongPoll {
 
     @Override
     public void messageNew(Integer groupId, String secret, Message message) {
-        messageNew(groupId,message);
+        messageNew(groupId, message);
     }
 
     @Override
     public void messageNew(Integer groupId, Message message) {
         try {
+            message.getAttachments().forEach(messageAttachment -> messageAttachment.getPhoto().getSizes().forEach(photoSizes -> System.out.println(photoSizes.getUrl() + " " + message.getId())));
             api.messages().markAsRead(actor).peerId(message.getPeerId()).execute();
             List<GetResponse> list = api.users().get(actor).userIds(message.getPeerId().toString()).execute();
             String name = "";
             String phone = null;
             if (!list.isEmpty()) {
                 GetResponse response = list.get(0);
-                if(response.getFirstName() == null && response.getLastName() == null){
+                if (response.getFirstName() == null && response.getLastName() == null) {
                     name = response.getNickname();
                 }
-                if(response.getFirstName() != null){
+                if (response.getFirstName() != null) {
                     name += response.getFirstName();
                 }
-                if(response.getLastName() != null){
+                if (response.getLastName() != null) {
                     name += " " + response.getLastName();
                 }
                 phone = response.getMobilePhone();
@@ -56,16 +55,9 @@ public class VkUpdateHandler extends CallbackApiLongPoll {
         }
     }
 
-    //
-//    @Override
-//    public void messageReply(Integer groupId, Message message) {
-//        System.out.println("reply");
-//    }
-//
-
     @Override
     public void messageEdit(Integer groupId, String secret, Message message) {
-        messageEdit(groupId,message);
+        messageEdit(groupId, message);
     }
 
     @Override
@@ -74,16 +66,6 @@ public class VkUpdateHandler extends CallbackApiLongPoll {
             messageAggregatorService.editMessageFromUser(message.getPeerId().toString(), message.getText(), message.getId().toString(), Platform.VK);
         } catch (Exception ignored) {
         }
-    }
-
-    @Override
-    public void messageAllow(Integer groupId, MessageAllow message) {
-        System.out.println("allow " + message.toString());
-    }
-
-    @Override
-    public void messageDeny(Integer groupId, MessageDeny message) {
-        System.out.println("deny " + message.toString());
     }
 
 }

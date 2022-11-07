@@ -10,9 +10,14 @@ import com.microel.microelhub.storage.OperatorDispatcher;
 import com.microel.microelhub.storage.entity.Message;
 import com.microel.microelhub.storage.entity.Operator;
 import org.springframework.data.domain.Page;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Controller
 @RequestMapping("api/private")
@@ -76,7 +81,7 @@ public class PrivateResolvers {
         }
         Page<Message> messages = null;
         try {
-            messages = messageDispatcher.getMessagesFromChat(request.getChatId(), request.getOffset(), request.getLimit());
+            messages = messageDispatcher.getMessagesFromUser(request.getUserId(), request.getPlatform(), request.getOffset(), request.getLimit());
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }
@@ -173,4 +178,6 @@ public class PrivateResolvers {
         }
         return ResponseEntity.ok(HttpResponse.of(null));
     }
+
+
 }
