@@ -38,6 +38,7 @@ public class ConfigurationDispatcher {
                 .warning(configBody.getWarning())
                 .startWorkingDay(configBody.getStartWorkingDay())
                 .endWorkingDay(configBody.getEndWorkingDay())
+                .chatTimeout(configBody.getChatTimeout())
                 .tlgBotToken(configBody.getTlgBotToken())
                 .tlgBotUsername(configBody.getTlgBotUsername())
                 .vkGroupToken(configBody.getVkGroupToken())

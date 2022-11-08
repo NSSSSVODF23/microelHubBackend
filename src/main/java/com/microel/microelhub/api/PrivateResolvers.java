@@ -3,21 +3,14 @@ package com.microel.microelhub.api;
 import com.microel.microelhub.api.transport.*;
 import com.microel.microelhub.common.UpdateType;
 import com.microel.microelhub.services.MessageAggregatorService;
-import com.microel.microelhub.storage.ChatDispatcher;
-import com.microel.microelhub.storage.ConfigurationDispatcher;
-import com.microel.microelhub.storage.MessageDispatcher;
-import com.microel.microelhub.storage.OperatorDispatcher;
+import com.microel.microelhub.storage.*;
+import com.microel.microelhub.storage.entity.Chat;
 import com.microel.microelhub.storage.entity.Message;
 import com.microel.microelhub.storage.entity.Operator;
 import org.springframework.data.domain.Page;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 @Controller
 @RequestMapping("api/private")
@@ -27,16 +20,18 @@ public class PrivateResolvers {
     private final ChatDispatcher chatDispatcher;
     private final ConfigurationDispatcher configurationDispatcher;
     private final OperatorDispatcher operatorDispatcher;
+    private final UserDispatcher userDispatcher;
     private final OperatorWS operatorWS;
 
     private final ChatWS chatWS;
 
-    public PrivateResolvers(MessageAggregatorService messageAggregatorService, MessageDispatcher messageDispatcher, ChatDispatcher chatDispatcher, ConfigurationDispatcher configurationDispatcher, OperatorDispatcher operatorDispatcher, OperatorWS operatorWS, ChatWS chatWS) {
+    public PrivateResolvers(MessageAggregatorService messageAggregatorService, MessageDispatcher messageDispatcher, ChatDispatcher chatDispatcher, ConfigurationDispatcher configurationDispatcher, OperatorDispatcher operatorDispatcher, UserDispatcher userDispatcher, OperatorWS operatorWS, ChatWS chatWS) {
         this.messageAggregatorService = messageAggregatorService;
         this.messageDispatcher = messageDispatcher;
         this.chatDispatcher = chatDispatcher;
         this.configurationDispatcher = configurationDispatcher;
         this.operatorDispatcher = operatorDispatcher;
+        this.userDispatcher = userDispatcher;
         this.operatorWS = operatorWS;
         this.chatWS = chatWS;
     }
@@ -129,6 +124,18 @@ public class PrivateResolvers {
         return ResponseEntity.ok(HttpResponse.of(null));
     }
 
+    @PatchMapping("chat-read")
+    private ResponseEntity<HttpResponse> doReadChat(@RequestBody String chatId) {
+        if (chatId == null || chatId.isBlank())
+            return ResponseEntity.ok(HttpResponse.error("Пустой идентификатор чата"));
+        try {
+            chatWS.sendMessage(ListUpdateWrapper.of(UpdateType.UPDATE, chatDispatcher.clearUnread(chatId), "read"));
+        } catch (Exception e) {
+            return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
+        }
+        return ResponseEntity.ok(HttpResponse.of(null));
+    }
+
     @PostMapping("config")
     private ResponseEntity<HttpResponse> getConfig() {
         return ResponseEntity.ok(HttpResponse.of(configurationDispatcher.getLastConfig()));
@@ -141,43 +148,75 @@ public class PrivateResolvers {
     }
 
     @PostMapping("operators")
-    private ResponseEntity<HttpResponse> getOperators(@RequestBody PageRequest body){
-        if(body.getOffset() == null || body.getOffset()<0) return ResponseEntity.ok(HttpResponse.error("Offset не может быть отрицательным"));
-        if(body.getLimit() == null || body.getLimit() <1) return ResponseEntity.ok(HttpResponse.error("Limit не может быть меньше единицы"));
+    private ResponseEntity<HttpResponse> getOperators(@RequestBody PageRequest body) {
+        if (body.getOffset() == null || body.getOffset() < 0)
+            return ResponseEntity.ok(HttpResponse.error("Offset не может быть отрицательным"));
+        if (body.getLimit() == null || body.getLimit() < 1)
+            return ResponseEntity.ok(HttpResponse.error("Limit не может быть меньше единицы"));
         return ResponseEntity.ok(HttpResponse.of(operatorDispatcher.getPage(body)));
     }
 
     @PostMapping("operator")
-    private ResponseEntity<HttpResponse> addOperator(@RequestBody Operator operator){
+    private ResponseEntity<HttpResponse> addOperator(@RequestBody Operator operator) {
         try {
             operatorDispatcher.create(operator);
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }
-        operatorWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD,operator));
+        operatorWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, operator));
         return ResponseEntity.ok(HttpResponse.of(null));
     }
 
     @PatchMapping("operator")
-    private ResponseEntity<HttpResponse> editOperator(@RequestBody Operator operator){
+    private ResponseEntity<HttpResponse> editOperator(@RequestBody Operator operator) {
         try {
             operatorDispatcher.edit(operator);
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }
-        operatorWS.sendMessage(ListUpdateWrapper.of(UpdateType.UPDATE,operator));
+        operatorWS.sendMessage(ListUpdateWrapper.of(UpdateType.UPDATE, operator));
         return ResponseEntity.ok(HttpResponse.of(null));
     }
 
     @DeleteMapping("operator/{login}")
     private ResponseEntity<HttpResponse> deleteOperator(@PathVariable String login) {
         try {
-            operatorWS.sendMessage(ListUpdateWrapper.of(UpdateType.REMOVE,operatorDispatcher.deleteOperator(login)));
+            operatorWS.sendMessage(ListUpdateWrapper.of(UpdateType.REMOVE, operatorDispatcher.deleteOperator(login)));
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }
         return ResponseEntity.ok(HttpResponse.of(null));
     }
 
+    @PostMapping("user-phone")
+    private ResponseEntity<HttpResponse> appendPhoneToUser(@RequestBody UserAppendPhoneRequest body) {
+        try {
+            userDispatcher.appendPhone(body.getUserId(), body.getPlatform(), body.getPhone());
 
+            Chat chat = chatDispatcher.getLastByUserId(body.getUserId(), body.getPlatform());
+            if (chat == null || !chat.getActive()) return ResponseEntity.ok(HttpResponse.of(null));
+
+            chatWS.sendMessage(ListUpdateWrapper.of(UpdateType.UPDATE, chat));
+            return ResponseEntity.ok(HttpResponse.of(null));
+
+        } catch (Exception e) {
+            return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("user-login")
+    private ResponseEntity<HttpResponse> setLoginToUser(@RequestBody UserSetPhoneRequest body){
+        try {
+            userDispatcher.setLogin(body.getUserId(), body.getPlatform(), body.getLogin());
+
+            Chat chat = chatDispatcher.getLastByUserId(body.getUserId(), body.getPlatform());
+            if (chat == null || !chat.getActive()) return ResponseEntity.ok(HttpResponse.of(null));
+
+            chatWS.sendMessage(ListUpdateWrapper.of(UpdateType.UPDATE, chat));
+            return ResponseEntity.ok(HttpResponse.of(null));
+
+        } catch (Exception e) {
+            return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
+        }
+    }
 }

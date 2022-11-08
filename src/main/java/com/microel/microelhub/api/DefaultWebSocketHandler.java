@@ -16,12 +16,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public abstract class DefaultWebSocketHandler<T> extends TextWebSocketHandler {
 
     private final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
+    private final ConcurrentLinkedDeque<T> messages = new ConcurrentLinkedDeque<T>();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.SECONDS)
@@ -62,7 +65,17 @@ public abstract class DefaultWebSocketHandler<T> extends TextWebSocketHandler {
     }
 
     public void sendMessage(T object) {
-        sessions.forEach(session -> sendUnicast(session, object));
+        if(messages.size() == 0){
+            messages.add(object);
+            Executors.newSingleThreadExecutor().execute(()->{
+                for (T message : messages){
+                    sessions.forEach(session -> sendUnicast(session, message));
+                }
+                messages.clear();
+            });
+        }else{
+            messages.add(object);
+        }
     }
 
     private void sendUnicast(WebSocketSession session, T object) {

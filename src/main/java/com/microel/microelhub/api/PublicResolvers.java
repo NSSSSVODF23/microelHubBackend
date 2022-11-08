@@ -36,7 +36,7 @@ public class PublicResolvers {
         try {
             return ResponseEntity.ok(HttpResponse.of(authenticationManager.doRefresh(authenticationManager.validateRefreshToken(token))));
         } catch (Exception e) {
-            return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
+            return ResponseEntity.badRequest().build();
         }
     }
 

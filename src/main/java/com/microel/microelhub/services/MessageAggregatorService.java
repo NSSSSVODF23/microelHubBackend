@@ -44,7 +44,9 @@ public class MessageAggregatorService {
     private void autoCloseChatsSchedule() {
         chatDispatcher.getAllActive().forEach(chat -> {
             Instant lastMessageTime = chat.getLastMessage().toInstant();
-            if (lastMessageTime.plus(3, ChronoUnit.HOURS).isBefore(Instant.now()) && chat.getOperator() != null) {
+            Configuration config = configurationDispatcher.getLastConfig();
+            if(config.getChatTimeout() == null) config.setChatTimeout(10);
+            if (lastMessageTime.plus(config.getChatTimeout(), ChronoUnit.MINUTES).isBefore(Instant.now()) && chat.getOperator() != null) {
                 try {
                     chatWS.sendMessage(ListUpdateWrapper.of(UpdateType.REMOVE, chatDispatcher.changeActive(chat.getChatId().toString(), false), "inactive"));
                 } catch (Exception e) {
@@ -63,6 +65,7 @@ public class MessageAggregatorService {
         this.chatWS = chatWS;
         this.vkService = vkService;
         this.telegramBot = telegramBot;
+
     }
 
     private void sendGreetingMessage(String chatId, Platform platform) {
@@ -78,25 +81,15 @@ public class MessageAggregatorService {
         }
     }
 
-    public void nextMessageFromUser(String userId, String text, String chatMsgId, String phone, String name, Platform platform, MessageAttachment ...messageAttachment) {
+    public void nextMessageFromUser(String userId, String text, String chatMsgId, String name, Platform platform, MessageAttachment ...messageAttachment) {
         Chat chat = chatDispatcher.getLastByUserId(userId, platform);
         if (chat != null && chat.getActive()) {
             chatDispatcher.updateLastMessageStamp(chat);
+            chatDispatcher.unreadIncrease(chat);
             chatMessageWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, messageDispatcher.add(text, chatMsgId, chat, messageAttachment)));
+            chatWS.sendMessage(ListUpdateWrapper.of(UpdateType.UPDATE, chat, "unread"));
         } else {
-            Message message = messageDispatcher.add(text, chatMsgId, userId, phone, name, platform, messageAttachment);
-            chatMessageWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, message));
-            sendGreetingMessage(message.getChat().getChatId().toString(), platform);
-        }
-    }
-
-    public void nextMessageFromUser(String userId, String text, String chatMsgId, String phone, String name, Platform platform) {
-        Chat chat = chatDispatcher.getLastByUserId(userId, platform);
-        if (chat != null && chat.getActive()) {
-            chatDispatcher.updateLastMessageStamp(chat);
-            chatMessageWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, messageDispatcher.add(text, chatMsgId, chat, new MessageAttachment[]{})));
-        } else {
-            Message message = messageDispatcher.add(text, chatMsgId, userId, phone, name, platform, new MessageAttachment(){});
+            Message message = messageDispatcher.add(text, chatMsgId, userId, name, platform, messageAttachment);
             chatMessageWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, message));
             sendGreetingMessage(message.getChat().getChatId().toString(), platform);
         }

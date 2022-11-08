@@ -13,16 +13,34 @@ public class UserDispatcher {
         this.userRepository = userRepository;
     }
 
-    public User upsert(String userId, String phone, String name, Platform platform) {
-        User found = userRepository.findTopByUserId(userId);
-        if(found != null){
-            found.setPhone(phone);
+    public User upsert(String userId, String name, Platform platform) {
+        User found = userRepository.findTopByUserIdAndPlatform(userId, platform);
+        if (found != null) {
             found.setName(name);
-            found.setPlatform(platform);
             return userRepository.save(found);
-        }else{
-            User created = new User(userId,phone,name, platform);
+        } else {
+            User created = new User(userId, null, null, name, platform);
             return userRepository.save(created);
         }
+    }
+
+    public User appendPhone(String userId, Platform platform, String phone) throws Exception {
+        if(userId == null || userId.isBlank()) throw new Exception("Пустой идентификатор пользователя");
+        if(platform == null) throw new Exception("Пустая платформа");
+        if(phone == null || phone.isBlank()) throw new Exception("Пустой телефон");
+        User found = userRepository.findTopByUserIdAndPlatform(userId, platform);
+        if (found == null) throw new Exception("Пользователь " + userId + " не найден");
+        found.getPhones().add(phone);
+        return userRepository.save(found);
+    }
+
+    public User setLogin(String userId, Platform platform, String login) throws Exception {
+        if(userId == null || userId.isBlank()) throw new Exception("Пустой идентификатор пользователя");
+        if(platform == null) throw new Exception("Пустая платформа");
+        if(login == null || login.isBlank()) throw new Exception("Пустой логин");
+        User found = userRepository.findTopByUserIdAndPlatform(userId, platform);
+        if (found == null) throw new Exception("Пользователь " + userId + " не найден");
+        found.setBillingLogin(login);
+        return userRepository.save(found);
     }
 }

@@ -72,9 +72,9 @@ public class Bot extends TelegramLongPollingBot implements MessageSenderWrapper 
             if (message.hasPhoto()) {
                 MessageAttachment messageAttachment = this.savePhoto(message.getPhoto().get(message.getPhoto().size() - 1));
                 if (messageAttachment != null)
-                    messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), null, fullName, Platform.TELEGRAM, messageAttachment);
+                    messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
             } else {
-                messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getText(), message.getMessageId().toString(), null, fullName, Platform.TELEGRAM);
+                messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getText(), message.getMessageId().toString(), fullName, Platform.TELEGRAM);
             }
         } else if (update.hasEditedMessage()) {
             Message editedMessage = update.getEditedMessage();

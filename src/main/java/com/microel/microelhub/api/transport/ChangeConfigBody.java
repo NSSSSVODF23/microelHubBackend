@@ -13,6 +13,7 @@ public class ChangeConfigBody {
     private String warning;
     private Time startWorkingDay;
     private Time endWorkingDay;
+    private Integer chatTimeout;
     private String vkGroupId;
     private String vkGroupToken;
     private String tlgBotUsername;

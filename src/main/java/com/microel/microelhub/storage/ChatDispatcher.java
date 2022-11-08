@@ -35,13 +35,13 @@ public class ChatDispatcher {
         return chatRepository.findTopByChatIdAndUser_PlatformOrderByCreatedDesc(uuid, platform);
     }
 
-    public Chat create(String userId, String phone, String name, Platform platform) {
+    public Chat create(String userId, String name, Platform platform) {
         return chatRepository.save(Chat.builder()
                 .chatId(UUID.randomUUID())
                 .created(Timestamp.from(Instant.now()))
                 .lastMessage(Timestamp.from(Instant.now()))
                 .active(true)
-                .user(userDispatcher.upsert(userId, phone, name, platform))
+                .user(userDispatcher.upsert(userId, name, platform))
                 .build());
     }
 
@@ -49,12 +49,12 @@ public class ChatDispatcher {
         Chat chat = null;
         try {
             chat = chatRepository.findById(UUID.fromString(chatId)).orElse(null);
-        }catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             throw new Exception("Не правильный UUID чата");
         }
-        if(chat == null) throw new Exception("Не найден чат");
+        if (chat == null) throw new Exception("Не найден чат");
         Operator operator = operatorDispatcher.getByLogin(login);
-        if(operator == null) throw new Exception("Не найден оператор по логину");
+        if (operator == null) throw new Exception("Не найден оператор по логину");
         chat.setOperator(operator);
         chat.setLastMessage(Timestamp.from(Instant.now()));
         return chatRepository.save(chat);
@@ -64,10 +64,10 @@ public class ChatDispatcher {
         Chat chat = null;
         try {
             chat = chatRepository.findById(UUID.fromString(chatId)).orElse(null);
-        }catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             throw new Exception("Не правильный UUID чата");
         }
-        if(chat == null) throw new Exception("Не найден чат");
+        if (chat == null) throw new Exception("Не найден чат");
         chat.setActive(active);
         return chatRepository.save(chat);
     }
@@ -83,5 +83,26 @@ public class ChatDispatcher {
 
     public List<Chat> getAllActive() {
         return chatRepository.findAllByActiveOrderByLastMessageDesc(true);
+    }
+
+    public void unreadIncrease(Chat chat) {
+        if (chat.getUnreadCount() == null) {
+            chat.setUnreadCount(1);
+        } else {
+            chat.setUnreadCount(chat.getUnreadCount() + 1);
+        }
+        chatRepository.save(chat);
+    }
+
+    public Chat clearUnread(String chatId) throws Exception {
+        Chat chat = null;
+        try {
+            chat = chatRepository.findById(UUID.fromString(chatId)).orElse(null);
+        } catch (IllegalArgumentException e) {
+            throw new Exception("Не правильный UUID чата");
+        }
+        if (chat == null) throw new Exception("Не найден чат");
+        chat.setUnreadCount(0);
+        return chatRepository.save(chat);
     }
 }

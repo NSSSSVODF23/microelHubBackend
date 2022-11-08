@@ -25,6 +25,7 @@ public class Chat {
     private Boolean active;
     private Timestamp created;
     private Timestamp lastMessage;
+    private Integer unreadCount;
     @ManyToOne
     @JoinColumn(name = "f_operator_id")
     private Operator operator;

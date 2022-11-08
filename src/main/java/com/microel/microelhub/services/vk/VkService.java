@@ -1,5 +1,6 @@
 package com.microel.microelhub.services.vk;
 
+import com.microel.microelhub.common.AttachmentsSavingController;
 import com.microel.microelhub.common.chat.Platform;
 import com.microel.microelhub.services.MessageAggregatorService;
 import com.microel.microelhub.services.MessageSenderWrapper;
@@ -16,7 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.Executors;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static java.lang.Thread.sleep;
 
 @Slf4j
 @Service
@@ -24,22 +28,26 @@ public class VkService implements MessageSenderWrapper {
     private final VkApiClient api;
     private GroupActor groupActor;
     private VkUpdateHandler pollHandler;
+    private final Map<Integer, Boolean> pollThreads = new ConcurrentHashMap<>();
+    private static Integer pollThreadIndex = 0;
     private final ConfigurationDispatcher configurationDispatcher;
     private final StatedApiService statedApiService;
+    private Thread pollThread = null;
 
-    public VkService(@Lazy MessageAggregatorService messageAggregatorService, ConfigurationDispatcher configurationDispatcher, StatedApiService statedApiService) {
+    public VkService(@Lazy MessageAggregatorService messageAggregatorService, ConfigurationDispatcher configurationDispatcher, StatedApiService statedApiService, AttachmentsSavingController attachmentsSavingController) {
         this.configurationDispatcher = configurationDispatcher;
         this.statedApiService = statedApiService;
         statedApiService.logCreated(Platform.VK);
         TransportClient transportClient = new HttpTransportClient();
         api = new VkApiClient(transportClient);
-        configurationDispatcher.addChangeConfigurationHandler("vk", () -> initialization(messageAggregatorService));
-        initialization(messageAggregatorService);
+        configurationDispatcher.addChangeConfigurationHandler("vk", () -> initialization(messageAggregatorService, attachmentsSavingController));
+        initialization(messageAggregatorService, attachmentsSavingController);
     }
 
-    private void initialization(MessageAggregatorService messageAggregatorService) {
+    private void initialization(MessageAggregatorService messageAggregatorService, AttachmentsSavingController attachmentsSavingController) {
         Configuration configuration = configurationDispatcher.getLastConfig();
-
+        if (pollHandler != null && pollHandler.isRunning()) pollHandler.stop();
+        if (pollThreadIndex > 0) pollThreads.put(pollThreadIndex, false);
         if (configuration == null || configuration.getVkGroupId() == null || configuration.getVkGroupToken() == null) {
             statedApiService.logStatusChange(Platform.VK, "Реквизиты для инициализации API пусты");
             return;
@@ -63,13 +71,9 @@ public class VkService implements MessageSenderWrapper {
             return;
         }
 
-        pollHandler = new VkUpdateHandler(api, groupActor, 35, messageAggregatorService);
-        Executors.newSingleThreadExecutor().execute(() -> {
-            try {
-                pollHandler.run();
-            } catch (Exception ignored) {
-            }
-        });
+        pollHandler = new VkUpdateHandler(api, groupActor, 35, messageAggregatorService, attachmentsSavingController);
+        pollHandler.run();
+
         statedApiService.logStatusChange(Platform.VK, "API инициализирован успешно");
     }
 

@@ -47,8 +47,8 @@ public class MessageDispatcher {
         return add(message, chatMsgId, chat, false, messageAttachment);
     }
 
-    public Message add(String message, String chatMsgId, String userId, String phone, String name, Platform platform, MessageAttachment ...messageAttachment) {
-        Chat newChat = chatDispatcher.create(userId, phone, name, platform);
+    public Message add(String message, String chatMsgId, String userId, String name, Platform platform, MessageAttachment ...messageAttachment) {
+        Chat newChat = chatDispatcher.create(userId, name, platform);
         chatWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, newChat));
         return add(message, chatMsgId, newChat, messageAttachment);
     }
