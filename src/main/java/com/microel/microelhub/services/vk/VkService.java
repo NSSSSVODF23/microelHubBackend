@@ -63,8 +63,8 @@ public class VkService implements MessageSenderWrapper {
         }
 
         try {
-            api.groups().setLongPollSettings(groupActor, Integer.parseInt(configuration.getVkGroupId())).enabled(true).apiVersion("5.95")
-                    .messageNew(true).messageDeny(true).messageAllow(true).messageEdit(true)
+            api.groups().setLongPollSettings(groupActor, Integer.parseInt(configuration.getVkGroupId())).enabled(true).apiVersion("5.102")
+                    .messageNew(true).messageDeny(false).messageAllow(false).messageEdit(true)
                     .execute();
         } catch (Exception e) {
             statedApiService.logStatusChange(Platform.VK, "Не удалось сконфигурировать VK API");

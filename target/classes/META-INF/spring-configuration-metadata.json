@@ -10,14 +10,12 @@
     {
       "name": "app.auth-refresh-token-secret-key",
       "type": "java.lang.String",
-      "sourceType": "com.microel.microelhub.configuration.ApplicationProperties",
-      "defaultValue": ""
+      "sourceType": "com.microel.microelhub.configuration.ApplicationProperties"
     },
     {
       "name": "app.auth-user-token-secret-key",
       "type": "java.lang.String",
-      "sourceType": "com.microel.microelhub.configuration.ApplicationProperties",
-      "defaultValue": ""
+      "sourceType": "com.microel.microelhub.configuration.ApplicationProperties"
     }
   ],
   "hints": []

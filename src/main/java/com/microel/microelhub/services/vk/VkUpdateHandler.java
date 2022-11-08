@@ -7,6 +7,7 @@ import com.microel.microelhub.services.MessageAggregatorService;
 import com.microel.microelhub.storage.entity.MessageAttachment;
 import com.vk.api.sdk.client.VkApiClient;
 import com.vk.api.sdk.client.actors.GroupActor;
+import com.vk.api.sdk.objects.callback.MessageAllow;
 import com.vk.api.sdk.objects.messages.Message;
 import com.vk.api.sdk.objects.photos.Photo;
 import com.vk.api.sdk.objects.photos.PhotoSizes;
@@ -76,7 +77,12 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
         }
     }
 
-//    @Override
+    @Override
+    public void messageAllow(Integer groupId, MessageAllow message) {
+        System.out.println("Message allow "+message);
+    }
+
+    //    @Override
 //    public void messageEdit(Integer groupId, String secret, Message message) {
 //        messageEdit(groupId, message);
 //    }
