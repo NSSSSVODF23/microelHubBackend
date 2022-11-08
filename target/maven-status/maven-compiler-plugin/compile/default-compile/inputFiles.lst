@@ -5,6 +5,7 @@ C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\m
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\services\vk\VkService.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\chat\AttachmentType.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\entity\MessageAttachment.java
+C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\UserAppendPhoneRequest.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\chat\EditMessageHandle.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\UpdateType.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\repository\ConfigurationRepository.java
@@ -28,6 +29,7 @@ C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\m
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\ConfigurationDispatcher.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\security\JwtAuthentication.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\ApiStatus.java
+C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\UserSetPhoneRequest.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\entity\Message.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\SendMessageBody.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\OperatorGroup.java
