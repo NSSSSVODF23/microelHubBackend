@@ -26,7 +26,7 @@ public class Security {
         return http
                 .httpBasic().disable()
                 .csrf().disable().cors(Customizer.withDefaults())
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)//FIXME Включить проверку токена
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and().authorizeRequests()
                 .antMatchers(
                         "/api/public/**", "/api/ws/**"

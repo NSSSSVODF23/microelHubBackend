@@ -1,7 +1,9 @@
 package com.microel.microelhub.storage;
 
 import com.microel.microelhub.common.chat.Platform;
+import com.microel.microelhub.services.telegram.TelegramService;
 import com.microel.microelhub.storage.entity.Chat;
+import com.microel.microelhub.storage.entity.Configuration;
 import com.microel.microelhub.storage.entity.Operator;
 import com.microel.microelhub.storage.repository.ChatRepository;
 import org.springframework.data.domain.Page;
@@ -17,12 +19,15 @@ import java.util.UUID;
 public class ChatDispatcher {
     private final ChatRepository chatRepository;
     private final UserDispatcher userDispatcher;
-
+    private final ConfigurationDispatcher configurationDispatcher;
+    private final TelegramService telegramService;
     private final OperatorDispatcher operatorDispatcher;
 
-    public ChatDispatcher(ChatRepository chatRepository, UserDispatcher userDispatcher, OperatorDispatcher operatorDispatcher) {
+    public ChatDispatcher(ChatRepository chatRepository, UserDispatcher userDispatcher, ConfigurationDispatcher configurationDispatcher, TelegramService telegramService, OperatorDispatcher operatorDispatcher) {
         this.chatRepository = chatRepository;
         this.userDispatcher = userDispatcher;
+        this.configurationDispatcher = configurationDispatcher;
+        this.telegramService = telegramService;
         this.operatorDispatcher = operatorDispatcher;
     }
 
@@ -55,6 +60,12 @@ public class ChatDispatcher {
         if (chat == null) throw new Exception("Не найден чат");
         Operator operator = operatorDispatcher.getByLogin(login);
         if (operator == null) throw new Exception("Не найден оператор по логину");
+        Configuration config = configurationDispatcher.getLastConfig();
+        if (config != null) {
+            if (config.getTlgNotificationChatId() != null) {
+                telegramService.sendMessage(config.getTlgNotificationChatId(), "Диалог с "+chat.getUser().getName()+" взят в работу " + operator.getName());
+            }
+        }
         chat.setOperator(operator);
         chat.setLastMessage(Timestamp.from(Instant.now()));
         return chatRepository.save(chat);

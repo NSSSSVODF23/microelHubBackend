@@ -4,6 +4,7 @@ import com.microel.microelhub.api.ChatWS;
 import com.microel.microelhub.api.transport.ListUpdateWrapper;
 import com.microel.microelhub.common.UpdateType;
 import com.microel.microelhub.common.chat.Platform;
+import com.microel.microelhub.services.ChatAndMessageTuple;
 import com.microel.microelhub.storage.entity.Chat;
 import com.microel.microelhub.storage.entity.Message;
 import com.microel.microelhub.storage.entity.MessageAttachment;
@@ -47,10 +48,9 @@ public class MessageDispatcher {
         return add(message, chatMsgId, chat, false, messageAttachment);
     }
 
-    public Message add(String message, String chatMsgId, String userId, String name, Platform platform, MessageAttachment ...messageAttachment) {
+    public ChatAndMessageTuple add(String message, String chatMsgId, String userId, String name, Platform platform, MessageAttachment ...messageAttachment) {
         Chat newChat = chatDispatcher.create(userId, name, platform);
-        chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, newChat));
-        return add(message, chatMsgId, newChat, messageAttachment);
+        return new ChatAndMessageTuple(newChat ,add(message, chatMsgId, newChat, messageAttachment));
     }
 
     public Message edit(String message, String chatMsgId, Chat chat) throws Exception {

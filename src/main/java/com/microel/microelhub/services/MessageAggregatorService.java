@@ -79,10 +79,15 @@ public class MessageAggregatorService {
     private void sendGreetingMessage(String chatId, Platform platform) {
         Configuration config = configurationDispatcher.getLastConfig();
         try {
-            if (config.getStartWorkingDay().before(Time.valueOf(LocalTime.now())) && config.getEndWorkingDay().after(Time.valueOf(LocalTime.now()))) {
-                sendMessage(chatId, config.getGreeting(), platform);
-            } else {
-                sendMessage(chatId, config.getWarning(), platform);
+            if (config != null) {
+                if (config.getTlgNotificationChatId() != null) {
+                    telegramService.sendMessage(config.getTlgNotificationChatId(), "Новое обращение из " + platform.name());
+                }
+                if (config.getStartWorkingDay().before(Time.valueOf(LocalTime.now())) && config.getEndWorkingDay().after(Time.valueOf(LocalTime.now()))) {
+                    sendMessage(chatId, config.getGreeting(), platform);
+                } else {
+                    sendMessage(chatId, config.getWarning(), platform);
+                }
             }
         } catch (Exception e) {
             log.warn("Не удалось отправить сообщение приветствие {}", e.getMessage());
@@ -97,9 +102,10 @@ public class MessageAggregatorService {
             chatMessageWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, messageDispatcher.add(text, chatMsgId, chat, messageAttachment)));
             chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, chat, "unread"));
         } else {
-            Message message = messageDispatcher.add(text, chatMsgId, userId, name, platform, messageAttachment);
-            chatMessageWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, message));
-            sendGreetingMessage(message.getChat().getChatId().toString(), platform);
+            ChatAndMessageTuple tuple = messageDispatcher.add(text, chatMsgId, userId, name, platform, messageAttachment);
+            chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, tuple.getChat()));
+            chatMessageWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, tuple.getMessage()));
+            sendGreetingMessage(tuple.getMessage().getChat().getChatId().toString(), platform);
         }
     }
 

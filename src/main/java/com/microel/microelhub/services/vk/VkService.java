@@ -28,11 +28,8 @@ public class VkService implements MessageSenderWrapper {
     private final VkApiClient api;
     private GroupActor groupActor;
     private VkUpdateHandler pollHandler;
-    private final Map<Integer, Boolean> pollThreads = new ConcurrentHashMap<>();
-    private static Integer pollThreadIndex = 0;
     private final ConfigurationDispatcher configurationDispatcher;
     private final StatedApiService statedApiService;
-    private Thread pollThread = null;
 
     public VkService(@Lazy MessageAggregatorService messageAggregatorService, ConfigurationDispatcher configurationDispatcher, StatedApiService statedApiService, AttachmentsSavingController attachmentsSavingController) {
         this.configurationDispatcher = configurationDispatcher;
@@ -47,7 +44,6 @@ public class VkService implements MessageSenderWrapper {
     private void initialization(MessageAggregatorService messageAggregatorService, AttachmentsSavingController attachmentsSavingController) {
         Configuration configuration = configurationDispatcher.getLastConfig();
         if (pollHandler != null && pollHandler.isRunning()) pollHandler.stop();
-        if (pollThreadIndex > 0) pollThreads.put(pollThreadIndex, false);
         if (configuration == null || configuration.getVkGroupId() == null || configuration.getVkGroupToken() == null) {
             statedApiService.logStatusChange(Platform.VK, "Реквизиты для инициализации API пусты");
             return;
@@ -63,8 +59,8 @@ public class VkService implements MessageSenderWrapper {
         }
 
         try {
-            api.groups().setLongPollSettings(groupActor, Integer.parseInt(configuration.getVkGroupId())).enabled(true).apiVersion("5.102")
-                    .messageNew(true).messageDeny(false).messageAllow(false).messageEdit(true)
+            api.groups().setLongPollSettings(groupActor, Integer.parseInt(configuration.getVkGroupId())).enabled(true).apiVersion("5.95")
+                    .messageNew(true).messageDeny(false).messageAllow(false).messageEdit(false)
                     .execute();
         } catch (Exception e) {
             statedApiService.logStatusChange(Platform.VK, "Не удалось сконфигурировать VK API");

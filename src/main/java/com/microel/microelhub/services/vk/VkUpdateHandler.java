@@ -78,16 +78,6 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
     }
 
     @Override
-    public void messageAllow(Integer groupId, MessageAllow message) {
-        System.out.println("Message allow "+message);
-    }
-
-    //    @Override
-//    public void messageEdit(Integer groupId, String secret, Message message) {
-//        messageEdit(groupId, message);
-//    }
-
-    @Override
     public void messageEdit(Integer groupId, Message message) {
         try {
             messageAggregatorService.editMessageFromUser(message.getPeerId().toString(), message.getText(), message.getId().toString(), Platform.VK);

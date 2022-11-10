@@ -18,4 +18,5 @@ public class ChangeConfigBody {
     private String vkGroupToken;
     private String tlgBotUsername;
     private String tlgBotToken;
+    private String tlgNotificationChatId;
 }
