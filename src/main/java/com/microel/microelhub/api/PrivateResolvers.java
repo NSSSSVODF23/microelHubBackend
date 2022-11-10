@@ -105,7 +105,7 @@ public class PrivateResolvers {
         if (request.getLogin() == null || request.getLogin().isBlank())
             return ResponseEntity.ok(HttpResponse.error("Пустой логин оператора"));
         try {
-            chatWS.sendMessage(ListUpdateWrapper.of(UpdateType.UPDATE, chatDispatcher.changeOperator(request.getChatId(), request.getLogin()), "operator"));
+            chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, chatDispatcher.changeOperator(request.getChatId(), request.getLogin()), "operator"));
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }
@@ -117,7 +117,7 @@ public class PrivateResolvers {
         if (chatId == null || chatId.isBlank())
             return ResponseEntity.ok(HttpResponse.error("Пустой идентификатор чата"));
         try {
-            chatWS.sendMessage(ListUpdateWrapper.of(UpdateType.REMOVE, chatDispatcher.changeActive(chatId, false), "inactive"));
+            chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.REMOVE, chatDispatcher.changeActive(chatId, false), "inactive"));
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }
@@ -129,7 +129,7 @@ public class PrivateResolvers {
         if (chatId == null || chatId.isBlank())
             return ResponseEntity.ok(HttpResponse.error("Пустой идентификатор чата"));
         try {
-            chatWS.sendMessage(ListUpdateWrapper.of(UpdateType.UPDATE, chatDispatcher.clearUnread(chatId), "read"));
+            chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, chatDispatcher.clearUnread(chatId), "read"));
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }
@@ -163,7 +163,7 @@ public class PrivateResolvers {
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }
-        operatorWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, operator));
+        operatorWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, operator));
         return ResponseEntity.ok(HttpResponse.of(null));
     }
 
@@ -174,14 +174,14 @@ public class PrivateResolvers {
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }
-        operatorWS.sendMessage(ListUpdateWrapper.of(UpdateType.UPDATE, operator));
+        operatorWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, operator));
         return ResponseEntity.ok(HttpResponse.of(null));
     }
 
     @DeleteMapping("operator/{login}")
     private ResponseEntity<HttpResponse> deleteOperator(@PathVariable String login) {
         try {
-            operatorWS.sendMessage(ListUpdateWrapper.of(UpdateType.REMOVE, operatorDispatcher.deleteOperator(login)));
+            operatorWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.REMOVE, operatorDispatcher.deleteOperator(login)));
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }
@@ -196,7 +196,7 @@ public class PrivateResolvers {
             Chat chat = chatDispatcher.getLastByUserId(body.getUserId(), body.getPlatform());
             if (chat == null || !chat.getActive()) return ResponseEntity.ok(HttpResponse.of(null));
 
-            chatWS.sendMessage(ListUpdateWrapper.of(UpdateType.UPDATE, chat));
+            chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, chat));
             return ResponseEntity.ok(HttpResponse.of(null));
 
         } catch (Exception e) {
@@ -212,7 +212,7 @@ public class PrivateResolvers {
             Chat chat = chatDispatcher.getLastByUserId(body.getUserId(), body.getPlatform());
             if (chat == null || !chat.getActive()) return ResponseEntity.ok(HttpResponse.of(null));
 
-            chatWS.sendMessage(ListUpdateWrapper.of(UpdateType.UPDATE, chat));
+            chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, chat));
             return ResponseEntity.ok(HttpResponse.of(null));
 
         } catch (Exception e) {

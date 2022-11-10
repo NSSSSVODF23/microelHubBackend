@@ -1,8 +1,18 @@
 package com.microel.microelhub.api;
 
 import com.microel.microelhub.api.transport.HttpResponse;
+import com.microel.microelhub.api.transport.IsWorkingResponse;
 import com.microel.microelhub.api.transport.LoginRequest;
+import com.microel.microelhub.api.transport.WebMessagesPage;
+import com.microel.microelhub.common.chat.Platform;
 import com.microel.microelhub.security.AuthenticationManager;
+import com.microel.microelhub.services.internal.InternalService;
+import com.microel.microelhub.services.internal.Message;
+import com.microel.microelhub.storage.ChatDispatcher;
+import com.microel.microelhub.storage.ConfigurationDispatcher;
+import com.microel.microelhub.storage.MessageDispatcher;
+import com.microel.microelhub.storage.entity.Chat;
+import com.microel.microelhub.storage.entity.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -11,15 +21,26 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Time;
+import java.time.Instant;
+import java.time.LocalTime;
 
 @Controller
 @RequestMapping("api/public")
 public class PublicResolvers {
 
     private final AuthenticationManager authenticationManager;
+    private final InternalService internalService;
+    private final ChatDispatcher chatDispatcher;
+    private final MessageDispatcher messageDispatcher;
+    private final ConfigurationDispatcher configurationDispatcher;
 
-    public PublicResolvers(AuthenticationManager authenticationManager) {
+    public PublicResolvers(AuthenticationManager authenticationManager, InternalService internalService, ChatDispatcher chatDispatcher, MessageDispatcher messageDispatcher, ConfigurationDispatcher configurationDispatcher) {
         this.authenticationManager = authenticationManager;
+        this.internalService = internalService;
+        this.chatDispatcher = chatDispatcher;
+        this.messageDispatcher = messageDispatcher;
+        this.configurationDispatcher = configurationDispatcher;
     }
 
     @PostMapping("login")
@@ -32,7 +53,7 @@ public class PublicResolvers {
     }
 
     @PostMapping("refresh-token")
-    private ResponseEntity<HttpResponse> refreshToken(@RequestBody String token){
+    private ResponseEntity<HttpResponse> refreshToken(@RequestBody String token) {
         try {
             return ResponseEntity.ok(HttpResponse.of(authenticationManager.doRefresh(authenticationManager.validateRefreshToken(token))));
         } catch (Exception e) {
@@ -43,10 +64,57 @@ public class PublicResolvers {
     @GetMapping("photo/{id}")
     private ResponseEntity<byte[]> getPhoto(@PathVariable String id) {
         try {
-            byte[] image = Files.readAllBytes(Path.of("./attachments","photos", id+".jpg"));
+            byte[] image = Files.readAllBytes(Path.of("./attachments", "photos", id + ".jpg"));
             return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).contentLength(image.length).body(image);
         } catch (IOException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping("chat/message")
+    private ResponseEntity<HttpResponse> getMessage(@RequestBody Message body) {
+        if (body.getUserId() == null)
+            return ResponseEntity.ok(HttpResponse.error("Идентификатор пользователя не может быть пустым"));
+        if (body.getMessage() == null || body.getMessage().isBlank())
+            return ResponseEntity.ok(HttpResponse.error("Сообщение не может быть пустым"));
+        internalService.onMessageReceived(body);
+        return ResponseEntity.ok(HttpResponse.of(null));
+    }
+
+    @GetMapping("chat/messages/{id}")
+    private ResponseEntity<HttpResponse> getMessagesFromChat(@PathVariable String id, @RequestParam Long offset, @RequestParam Integer limit) {
+        if (id == null) return ResponseEntity.ok(HttpResponse.error("Пустой идентификатор"));
+        if (offset == null || offset < 0L) offset = 0L;
+        if (limit == null || limit < 1) limit = 1;
+        Chat chat = chatDispatcher.getLastByUserId(id, Platform.INTERNAL);
+        if (chat != null && chat.getActive()) {
+            try {
+                return ResponseEntity.ok(HttpResponse.of(WebMessagesPage.of(messageDispatcher.getMessagesFromChat(chat.getChatId().toString(), offset, limit))));
+            } catch (Exception e) {
+                return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
+            }
+        } else {
+            return ResponseEntity.ok(HttpResponse.of(new WebMessagesPage()));
+        }
+    }
+
+    @GetMapping("chat/active/{id}")
+    private ResponseEntity<HttpResponse> getIsActiveChat(@PathVariable String id) {
+        if (id == null) return ResponseEntity.ok(HttpResponse.error("Пустой идентификатор"));
+        Chat chat = chatDispatcher.getLastByUserId(id, Platform.INTERNAL);
+        if (chat != null && chat.getActive()) {
+            return ResponseEntity.ok(HttpResponse.of(true));
+        } else {
+            return ResponseEntity.ok(HttpResponse.of(false));
+        }
+    }
+
+    @GetMapping("working")
+    private ResponseEntity<HttpResponse> getIsWorking() {
+        Configuration config = configurationDispatcher.getLastConfig();
+        if(config.getStartWorkingDay() == null || config.getEndWorkingDay() == null) return ResponseEntity.ok(HttpResponse.of(new IsWorkingResponse(true, config.getWarning())));
+        return ResponseEntity.ok(HttpResponse.of(new IsWorkingResponse(
+                (config.getStartWorkingDay().before(Time.valueOf(LocalTime.now())) && config.getEndWorkingDay().after(Time.valueOf(LocalTime.now()))),
+                config.getWarning())));
     }
 }

@@ -1,3 +1,4 @@
+C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\services\internal\Message.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\PageRequest.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\chat\ChatState.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\services\StatedApiService.java
@@ -5,6 +6,8 @@ C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\m
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\services\vk\VkService.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\chat\AttachmentType.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\entity\MessageAttachment.java
+C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\services\telegram\TelegramBotProvider.java
+C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\WebChatWS.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\UserAppendPhoneRequest.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\chat\EditMessageHandle.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\UpdateType.java
@@ -21,12 +24,14 @@ C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\m
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\repository\MessageRepository.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\repository\ChatRepository.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\BackendApplication.java
+C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\WebMessagesPage.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\configuration\ApplicationProperties.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\PublicResolvers.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\entity\Operator.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\MessageAttachmentDispatcher.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\ChatMessagesRequest.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\ConfigurationDispatcher.java
+C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\services\internal\InternalService.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\security\JwtAuthentication.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\ApiStatus.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\UserSetPhoneRequest.java
@@ -38,14 +43,14 @@ C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\m
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\LoginRequest.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\ChatWS.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\chat\NewMessageHandle.java
-C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\services\telegram\Bot.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\chat\DeleteMessageHandle.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\TokensResponse.java
+C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\AbstractWebSocketHandler.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\ChangeConfigBody.java
-C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\DefaultWebSocketHandler.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\services\MessageSenderWrapper.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\ChatMessageWS.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\repository\UserRepository.java
+C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\IsWorkingResponse.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\services\vk\VkUpdateHandler.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\repository\OperatorRepository.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\DeleteMessageBody.java

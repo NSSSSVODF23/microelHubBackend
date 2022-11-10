@@ -9,7 +9,7 @@ import org.springframework.stereotype.Controller;
 import java.util.List;
 
 @Controller
-public class ApisStatusWS extends DefaultWebSocketHandler<ApiStatus> {
+public class ApisStatusWS extends AbstractWebSocketHandler<ApiStatus> {
 
     private final AuthenticationManager authenticationManager;
     private final StatedApiService statedApiService;
@@ -25,7 +25,7 @@ public class ApisStatusWS extends DefaultWebSocketHandler<ApiStatus> {
     }
 
     @Override
-    public List<ApiStatus> onNewConnection() {
+    public List<ApiStatus> onNewConnection(String connectionToken) {
         return statedApiService.getStatuses();
     }
 

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Controller;
 import java.util.List;
 
 @Controller
-public class OperatorWS extends DefaultWebSocketHandler<ListUpdateWrapper<Operator>> {
+public class OperatorWS extends AbstractWebSocketHandler<ListUpdateWrapper<Operator>> {
 
     private final AuthenticationManager authenticationManager;
 
@@ -22,7 +22,7 @@ public class OperatorWS extends DefaultWebSocketHandler<ListUpdateWrapper<Operat
     }
 
     @Override
-    public List<ListUpdateWrapper<Operator>> onNewConnection() {
+    public List<ListUpdateWrapper<Operator>> onNewConnection(String connectionToken) {
         return null;
     }
 

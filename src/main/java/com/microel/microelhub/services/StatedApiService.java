@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -25,14 +24,14 @@ public class StatedApiService {
     public void logCreated(Platform platform) {
         ApiStatus status = new ApiStatus(platform, "API не инициализирован");
         statusMap.put(platform, status);
-        apisStatusWS.sendMessage(status);
+        apisStatusWS.sendBroadcast(status);
         log.info("{} API не инициализирован",platform);
     }
 
     public void logStatusChange(Platform platform, String text) {
         ApiStatus status = statusMap.get(platform);
         status.setStatus(text);
-        apisStatusWS.sendMessage(status);
+        apisStatusWS.sendBroadcast(status);
         log.info("{} {}",platform,text);
     }
 

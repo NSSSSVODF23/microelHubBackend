@@ -8,7 +8,7 @@ import org.springframework.stereotype.Controller;
 import java.util.List;
 
 @Controller
-public class ChatWS extends DefaultWebSocketHandler<ListUpdateWrapper<Chat>>{
+public class ChatWS extends AbstractWebSocketHandler<ListUpdateWrapper<Chat>> {
     private final AuthenticationManager authenticationManager;
 
     public ChatWS(AuthenticationManager authenticationManager) {
@@ -21,7 +21,7 @@ public class ChatWS extends DefaultWebSocketHandler<ListUpdateWrapper<Chat>>{
     }
 
     @Override
-    public List<ListUpdateWrapper<Chat>> onNewConnection() {
+    public List<ListUpdateWrapper<Chat>> onNewConnection(String connectionToken) {
         return null;
     }
 

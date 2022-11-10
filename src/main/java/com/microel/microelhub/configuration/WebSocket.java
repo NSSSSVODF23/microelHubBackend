@@ -1,9 +1,6 @@
 package com.microel.microelhub.configuration;
 
-import com.microel.microelhub.api.ApisStatusWS;
-import com.microel.microelhub.api.ChatMessageWS;
-import com.microel.microelhub.api.ChatWS;
-import com.microel.microelhub.api.OperatorWS;
+import com.microel.microelhub.api.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -19,12 +16,14 @@ public class WebSocket implements WebSocketConfigurer {
     private final ChatWS chatWs;
     private final ApisStatusWS apisStatusWS;
     private final OperatorWS operatorWS;
+    private final WebChatWS webChatWS;
 
-    public WebSocket(ChatMessageWS chatMessageWS, ChatWS chatWs, ApisStatusWS apisStatusWS, OperatorWS operatorWS) {
+    public WebSocket(ChatMessageWS chatMessageWS, ChatWS chatWs, ApisStatusWS apisStatusWS, OperatorWS operatorWS, WebChatWS webChatWS) {
         this.chatMessageWS = chatMessageWS;
         this.chatWs = chatWs;
         this.apisStatusWS = apisStatusWS;
         this.operatorWS = operatorWS;
+        this.webChatWS = webChatWS;
     }
 
     @Override
@@ -33,5 +32,6 @@ public class WebSocket implements WebSocketConfigurer {
         registry.addHandler(chatWs,"/api/ws/chats/{token}");
         registry.addHandler(apisStatusWS,"/api/ws/api-statuses/{token}");
         registry.addHandler(operatorWS,"/api/ws/operators/{token}");
+        registry.addHandler(webChatWS,"/api/ws/web-chat/{token}");
     }
 }

@@ -6,6 +6,7 @@ import com.microel.microelhub.storage.entity.Chat;
 import com.microel.microelhub.storage.entity.Message;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -20,4 +21,6 @@ public interface MessageRepository extends JpaRepository<Message, Long>, JpaSpec
     Optional<Message> findTopByChatAndChatMsgId(Chat chat, String chatMsgId);
 
     Page<Message> findByChat_User_UserIdAndChat_User_Platform(String userId, Platform platform, Pageable pageable);
+
+    Optional<Message> findTopByChat_User_UserIdAndChat_User_Platform(String userId, Platform platform, Sort sort);
 }

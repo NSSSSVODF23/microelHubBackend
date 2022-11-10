@@ -49,7 +49,7 @@ public class MessageDispatcher {
 
     public Message add(String message, String chatMsgId, String userId, String name, Platform platform, MessageAttachment ...messageAttachment) {
         Chat newChat = chatDispatcher.create(userId, name, platform);
-        chatWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, newChat));
+        chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, newChat));
         return add(message, chatMsgId, newChat, messageAttachment);
     }
 
@@ -92,4 +92,7 @@ public class MessageDispatcher {
         }
     }
 
+    public Message getLastMessageFromUser(String userId, Platform platform) {
+        return messageRepository.findTopByChat_User_UserIdAndChat_User_Platform(userId,platform,Sort.by(Sort.Direction.DESC,"timestamp")).orElse(null);
+    }
 }

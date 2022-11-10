@@ -8,12 +8,12 @@ import com.microel.microelhub.common.chat.DeleteMessageHandle;
 import com.microel.microelhub.common.chat.EditMessageHandle;
 import com.microel.microelhub.common.chat.NewMessageHandle;
 import com.microel.microelhub.common.chat.Platform;
-import com.microel.microelhub.services.telegram.Bot;
+import com.microel.microelhub.services.internal.InternalService;
+import com.microel.microelhub.services.telegram.TelegramService;
 import com.microel.microelhub.services.vk.VkService;
 import com.microel.microelhub.storage.ChatDispatcher;
 import com.microel.microelhub.storage.ConfigurationDispatcher;
 import com.microel.microelhub.storage.MessageDispatcher;
-import com.microel.microelhub.storage.OperatorDispatcher;
 import com.microel.microelhub.storage.entity.Chat;
 import com.microel.microelhub.storage.entity.Configuration;
 import com.microel.microelhub.storage.entity.Message;
@@ -33,22 +33,22 @@ import java.util.concurrent.TimeUnit;
 public class MessageAggregatorService {
     private final ChatDispatcher chatDispatcher;
     private final MessageDispatcher messageDispatcher;
-    private final OperatorDispatcher operatorDispatcher;
     private final ConfigurationDispatcher configurationDispatcher;
     private final ChatMessageWS chatMessageWS;
     private final ChatWS chatWS;
+    private final InternalService internalService;
     private final VkService vkService;
-    private final Bot telegramBot;
+    private final TelegramService telegramService;
 
     @Scheduled(initialDelay = 1, fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
     private void autoCloseChatsSchedule() {
         chatDispatcher.getAllActive().forEach(chat -> {
             Instant lastMessageTime = chat.getLastMessage().toInstant();
             Configuration config = configurationDispatcher.getLastConfig();
-            if(config.getChatTimeout() == null) config.setChatTimeout(10);
+            if (config.getChatTimeout() == null) config.setChatTimeout(10);
             if (lastMessageTime.plus(config.getChatTimeout(), ChronoUnit.MINUTES).isBefore(Instant.now()) && chat.getOperator() != null) {
                 try {
-                    chatWS.sendMessage(ListUpdateWrapper.of(UpdateType.REMOVE, chatDispatcher.changeActive(chat.getChatId().toString(), false), "inactive"));
+                    chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.REMOVE, chatDispatcher.changeActive(chat.getChatId().toString(), false), "inactive"));
                 } catch (Exception e) {
                     log.warn("Не удалось автоматически завершить чат {}", e.getMessage());
                 }
@@ -56,16 +56,24 @@ public class MessageAggregatorService {
         });
     }
 
-    public MessageAggregatorService(ChatDispatcher chatDispatcher, MessageDispatcher messageDispatcher, OperatorDispatcher operatorDispatcher, ConfigurationDispatcher configurationDispatcher, ChatMessageWS chatMessageWS, ChatWS chatWS, VkService vkService, Bot telegramBot) {
+    public MessageAggregatorService(
+            ChatDispatcher chatDispatcher,
+            MessageDispatcher messageDispatcher,
+            ConfigurationDispatcher configurationDispatcher,
+            ChatMessageWS chatMessageWS,
+            ChatWS chatWS,
+            InternalService internalService,
+            VkService vkService,
+            TelegramService telegramService
+    ) {
         this.chatDispatcher = chatDispatcher;
         this.messageDispatcher = messageDispatcher;
-        this.operatorDispatcher = operatorDispatcher;
         this.configurationDispatcher = configurationDispatcher;
         this.chatMessageWS = chatMessageWS;
         this.chatWS = chatWS;
+        this.internalService = internalService;
         this.vkService = vkService;
-        this.telegramBot = telegramBot;
-
+        this.telegramService = telegramService;
     }
 
     private void sendGreetingMessage(String chatId, Platform platform) {
@@ -81,16 +89,16 @@ public class MessageAggregatorService {
         }
     }
 
-    public void nextMessageFromUser(String userId, String text, String chatMsgId, String name, Platform platform, MessageAttachment ...messageAttachment) {
+    public void nextMessageFromUser(String userId, String text, String chatMsgId, String name, Platform platform, MessageAttachment... messageAttachment) {
         Chat chat = chatDispatcher.getLastByUserId(userId, platform);
         if (chat != null && chat.getActive()) {
             chatDispatcher.updateLastMessageStamp(chat);
             chatDispatcher.unreadIncrease(chat);
-            chatMessageWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, messageDispatcher.add(text, chatMsgId, chat, messageAttachment)));
-            chatWS.sendMessage(ListUpdateWrapper.of(UpdateType.UPDATE, chat, "unread"));
+            chatMessageWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, messageDispatcher.add(text, chatMsgId, chat, messageAttachment)));
+            chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, chat, "unread"));
         } else {
             Message message = messageDispatcher.add(text, chatMsgId, userId, name, platform, messageAttachment);
-            chatMessageWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, message));
+            chatMessageWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, message));
             sendGreetingMessage(message.getChat().getChatId().toString(), platform);
         }
     }
@@ -101,7 +109,7 @@ public class MessageAggregatorService {
             message.setEdited(true);
             message.setText(text);
             chatDispatcher.updateLastMessageStamp(message.getChat());
-            chatMessageWS.sendMessage(ListUpdateWrapper.of(UpdateType.UPDATE, messageDispatcher.update(message)));
+            chatMessageWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, messageDispatcher.update(message)));
         }
     }
 
@@ -111,7 +119,7 @@ public class MessageAggregatorService {
             String chatMsgId = handle.apply(chat.getUser().getUserId(), text);
             if (chatMsgId == null) throw new Exception("Не удалось отправить сообщение");
             chatDispatcher.updateLastMessageStamp(chat);
-            chatMessageWS.sendMessage(ListUpdateWrapper.of(UpdateType.ADD, messageDispatcher.add(text, chatMsgId, chat, true)));
+            chatMessageWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, messageDispatcher.add(text, chatMsgId, chat, true)));
             return;
         }
         throw new Exception("Не найден активный чат");
@@ -121,7 +129,7 @@ public class MessageAggregatorService {
         Chat chat = chatDispatcher.getLastByChatId(chatId, platform);
         if (chat != null && chat.getActive()) {
             handle.apply(chat.getUser().getUserId(), chatMsgId, text);
-            chatMessageWS.sendMessage(ListUpdateWrapper.of(UpdateType.UPDATE, messageDispatcher.edit(text, chatMsgId, chat)));
+            chatMessageWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, messageDispatcher.edit(text, chatMsgId, chat)));
         } else {
             throw new Exception("Не найден активный чат");
         }
@@ -131,7 +139,7 @@ public class MessageAggregatorService {
         Chat chat = chatDispatcher.getLastByChatId(chatId, platform);
         if (chat != null && chat.getActive()) {
             handle.apply(chat.getUser().getUserId(), chatMsgId);
-            chatMessageWS.sendMessage(ListUpdateWrapper.of(UpdateType.REMOVE, messageDispatcher.delete(chatMsgId, chat)));
+            chatMessageWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.REMOVE, messageDispatcher.delete(chatMsgId, chat)));
         }
     }
 
@@ -144,10 +152,10 @@ public class MessageAggregatorService {
                 nextOperatorMessage(vkService::sendMessage, chatId, text, platform);
                 break;
             case TELEGRAM:
-                nextOperatorMessage(telegramBot::sendMessage, chatId, text, platform);
+                nextOperatorMessage(telegramService::sendMessage, chatId, text, platform);
                 break;
             case INTERNAL:
-                log.info("internal");
+                nextOperatorMessage(internalService::sendMessage, chatId, text, platform);
                 break;
             default:
                 throw new Exception("Платформа не найдена");
@@ -163,10 +171,10 @@ public class MessageAggregatorService {
                 editOperatorMessage(vkService::editMessage, chatId, chatMsgId, text, platform);
                 break;
             case TELEGRAM:
-                editOperatorMessage(telegramBot::editMessage, chatId, chatMsgId, text, platform);
+                editOperatorMessage(telegramService::editMessage, chatId, chatMsgId, text, platform);
                 break;
             case INTERNAL:
-                log.info("internal");
+                editOperatorMessage(internalService::editMessage, chatId, chatMsgId, text, platform);
                 break;
             default:
                 throw new Exception("Платформа не найдена");
@@ -182,10 +190,10 @@ public class MessageAggregatorService {
                 deleteOperatorMessage(vkService::deleteMessage, chatId, chatMsgId, platform);
                 break;
             case TELEGRAM:
-                deleteOperatorMessage(telegramBot::deleteMessage, chatId, chatMsgId, platform);
+                deleteOperatorMessage(telegramService::deleteMessage, chatId, chatMsgId, platform);
                 break;
             case INTERNAL:
-                log.info("internal");
+                deleteOperatorMessage(internalService::deleteMessage, chatId, chatMsgId, platform);
                 break;
             default:
                 throw new Exception("Платформа не найдена");
