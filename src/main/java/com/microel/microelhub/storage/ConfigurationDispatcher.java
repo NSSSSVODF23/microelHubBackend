@@ -41,6 +41,7 @@ public class ConfigurationDispatcher {
                 .chatTimeout(configBody.getChatTimeout())
                 .tlgBotToken(configBody.getTlgBotToken())
                 .tlgBotUsername(configBody.getTlgBotUsername())
+                .tlgNotificationChatId(configBody.getTlgNotificationChatId())
                 .vkGroupToken(configBody.getVkGroupToken())
                 .vkGroupId(configBody.getVkGroupId())
                 .build();
