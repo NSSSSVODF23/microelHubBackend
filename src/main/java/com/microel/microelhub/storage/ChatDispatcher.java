@@ -63,7 +63,8 @@ public class ChatDispatcher {
         Configuration config = configurationDispatcher.getLastConfig();
         if (config != null) {
             if (config.getTlgNotificationChatId() != null) {
-                telegramService.sendMessage(config.getTlgNotificationChatId(), "Диалог с "+chat.getUser().getName()+" взят в работу " + operator.getName());
+                telegramService.sendMessage(config.getTlgNotificationChatId(), "⌨ Чат взят в работу\n"
+                        + chat.getUser().getPlatform().getLocalized() + " " + chat.getUser().getName() + "\nОператор: " + operator.getName());
             }
         }
         chat.setOperator(operator);

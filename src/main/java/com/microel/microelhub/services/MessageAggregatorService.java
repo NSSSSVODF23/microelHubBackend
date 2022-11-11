@@ -76,17 +76,18 @@ public class MessageAggregatorService {
         this.telegramService = telegramService;
     }
 
-    private void sendGreetingMessage(String chatId, Platform platform) {
+    private void sendGreetingMessage(Chat chat, Platform platform) {
         Configuration config = configurationDispatcher.getLastConfig();
         try {
             if (config != null) {
                 if (config.getTlgNotificationChatId() != null) {
-                    telegramService.sendMessage(config.getTlgNotificationChatId(), "Новое обращение из " + platform.name());
+                    telegramService.sendMessage(config.getTlgNotificationChatId(), "\uD83D\uDCAC Новый чат \n"
+                            + chat.getUser().getName() + " из " + platform.getLocalized());
                 }
                 if (config.getStartWorkingDay().before(Time.valueOf(LocalTime.now())) && config.getEndWorkingDay().after(Time.valueOf(LocalTime.now()))) {
-                    sendMessage(chatId, config.getGreeting(), platform);
+                    sendMessage(chat.getChatId().toString(), config.getGreeting(), platform);
                 } else {
-                    sendMessage(chatId, config.getWarning(), platform);
+                    sendMessage(chat.getChatId().toString(), config.getWarning(), platform);
                 }
             }
         } catch (Exception e) {
@@ -105,7 +106,7 @@ public class MessageAggregatorService {
             ChatAndMessageTuple tuple = messageDispatcher.add(text, chatMsgId, userId, name, platform, messageAttachment);
             chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, tuple.getChat()));
             chatMessageWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, tuple.getMessage()));
-            sendGreetingMessage(tuple.getMessage().getChat().getChatId().toString(), platform);
+            sendGreetingMessage(tuple.getChat(), platform);
         }
     }
 
