@@ -15,7 +15,7 @@ import java.sql.Timestamp;
 public class Call {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long call_id;
+    private Long callId;
     private String phone;
     private Timestamp created;
     private Boolean processed;
