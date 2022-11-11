@@ -18,5 +18,7 @@ public class Call {
     private Long callId;
     private String phone;
     private Timestamp created;
-    private Boolean processed;
+    @ManyToOne
+    @JoinColumn(name = "f_operator_login")
+    private Operator processed;
 }

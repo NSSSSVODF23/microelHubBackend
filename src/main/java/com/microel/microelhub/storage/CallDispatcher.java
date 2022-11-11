@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.List;
 
 @Component
 public class CallDispatcher {
@@ -19,7 +20,7 @@ public class CallDispatcher {
     }
 
     public Call create(String phone) {
-        return callRepository.save(Call.builder().phone(phone).created(Timestamp.from(Instant.now())).processed(false).build());
+        return callRepository.save(Call.builder().phone(phone).created(Timestamp.from(Instant.now())).build());
     }
 
     public Page<Call> getPage(PageRequest pageRequest) {
@@ -28,5 +29,9 @@ public class CallDispatcher {
 
     public Call getLastByPhone(String body) {
         return callRepository.findTopByPhone(body, Sort.by(Sort.Direction.DESC,"created"));
+    }
+
+    public List<Call> getUnprocessed() {
+        return callRepository.findAllByProcessedIsNull();
     }
 }

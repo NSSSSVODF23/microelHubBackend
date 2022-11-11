@@ -230,4 +230,9 @@ public class PrivateResolvers {
             return ResponseEntity.ok(HttpResponse.error("Limit не может быть меньше единицы"));
         return ResponseEntity.ok(HttpResponse.of(callDispatcher.getPage(body)));
     }
+
+    @PostMapping("unprocessed-calls")
+    private ResponseEntity<HttpResponse> getUnprocessedCalls() {
+        return ResponseEntity.ok(HttpResponse.of(callDispatcher.getUnprocessed()));
+    }
 }
