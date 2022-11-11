@@ -1,13 +1,12 @@
 package com.microel.microelhub.api;
 
-import com.microel.microelhub.api.transport.HttpResponse;
-import com.microel.microelhub.api.transport.WebChatConfigResponse;
-import com.microel.microelhub.api.transport.LoginRequest;
-import com.microel.microelhub.api.transport.WebMessagesPage;
+import com.microel.microelhub.api.transport.*;
+import com.microel.microelhub.common.UpdateType;
 import com.microel.microelhub.common.chat.Platform;
 import com.microel.microelhub.security.AuthenticationManager;
 import com.microel.microelhub.services.internal.InternalService;
 import com.microel.microelhub.services.internal.Message;
+import com.microel.microelhub.storage.CallDispatcher;
 import com.microel.microelhub.storage.ChatDispatcher;
 import com.microel.microelhub.storage.ConfigurationDispatcher;
 import com.microel.microelhub.storage.MessageDispatcher;
@@ -31,14 +30,18 @@ public class PublicResolvers {
     private final AuthenticationManager authenticationManager;
     private final InternalService internalService;
     private final ChatDispatcher chatDispatcher;
+    private final CallDispatcher callDispatcher;
     private final MessageDispatcher messageDispatcher;
+    private final CallWS callWS;
     private final ConfigurationDispatcher configurationDispatcher;
 
-    public PublicResolvers(AuthenticationManager authenticationManager, InternalService internalService, ChatDispatcher chatDispatcher, MessageDispatcher messageDispatcher, ConfigurationDispatcher configurationDispatcher) {
+    public PublicResolvers(AuthenticationManager authenticationManager, InternalService internalService, ChatDispatcher chatDispatcher, CallDispatcher callDispatcher, MessageDispatcher messageDispatcher, CallWS callWS, ConfigurationDispatcher configurationDispatcher) {
         this.authenticationManager = authenticationManager;
         this.internalService = internalService;
         this.chatDispatcher = chatDispatcher;
+        this.callDispatcher = callDispatcher;
         this.messageDispatcher = messageDispatcher;
+        this.callWS = callWS;
         this.configurationDispatcher = configurationDispatcher;
     }
 
@@ -111,14 +114,22 @@ public class PublicResolvers {
     @GetMapping("chat/config")
     private ResponseEntity<HttpResponse> getIsWorking() {
         Configuration config = configurationDispatcher.getLastConfig();
-        if(config.getStartWorkingDay() == null || config.getEndWorkingDay() == null) return ResponseEntity.ok(HttpResponse.of(new WebChatConfigResponse(true, config.getWarning(), null, null)));
+        if (config.getStartWorkingDay() == null || config.getEndWorkingDay() == null)
+            return ResponseEntity.ok(HttpResponse.of(new WebChatConfigResponse(true, config.getWarning(), null, null)));
         return ResponseEntity.ok(HttpResponse.of(
                 new WebChatConfigResponse(
-                    (config.getStartWorkingDay().before(Time.valueOf(LocalTime.now())) && config.getEndWorkingDay().after(Time.valueOf(LocalTime.now()))),
-                    config.getWarning(),
-                        "https://vk.com/im?sel=-"+config.getVkGroupId(),
-                        "https://telegram.me/"+config.getTlgBotUsername()
+                        (config.getStartWorkingDay().before(Time.valueOf(LocalTime.now())) && config.getEndWorkingDay().after(Time.valueOf(LocalTime.now()))),
+                        config.getWarning(),
+                        "https://vk.com/im?sel=-" + config.getVkGroupId(),
+                        "https://telegram.me/" + config.getTlgBotUsername()
                 )
         ));
+    }
+
+    @PostMapping("call")
+    private ResponseEntity<HttpResponse> createCall(@RequestBody String body) {
+        if (body == null || body.isBlank()) return ResponseEntity.ok(HttpResponse.error("Пустой номер телефона"));
+        callWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, callDispatcher.create(body)));
+        return ResponseEntity.ok(HttpResponse.of(null));
     }
 }

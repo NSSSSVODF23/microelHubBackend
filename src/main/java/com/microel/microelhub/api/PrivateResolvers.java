@@ -21,17 +21,19 @@ public class PrivateResolvers {
     private final ConfigurationDispatcher configurationDispatcher;
     private final OperatorDispatcher operatorDispatcher;
     private final UserDispatcher userDispatcher;
+    private final CallDispatcher callDispatcher;
     private final OperatorWS operatorWS;
 
     private final ChatWS chatWS;
 
-    public PrivateResolvers(MessageAggregatorService messageAggregatorService, MessageDispatcher messageDispatcher, ChatDispatcher chatDispatcher, ConfigurationDispatcher configurationDispatcher, OperatorDispatcher operatorDispatcher, UserDispatcher userDispatcher, OperatorWS operatorWS, ChatWS chatWS) {
+    public PrivateResolvers(MessageAggregatorService messageAggregatorService, MessageDispatcher messageDispatcher, ChatDispatcher chatDispatcher, ConfigurationDispatcher configurationDispatcher, OperatorDispatcher operatorDispatcher, UserDispatcher userDispatcher, CallDispatcher callDispatcher, OperatorWS operatorWS, ChatWS chatWS) {
         this.messageAggregatorService = messageAggregatorService;
         this.messageDispatcher = messageDispatcher;
         this.chatDispatcher = chatDispatcher;
         this.configurationDispatcher = configurationDispatcher;
         this.operatorDispatcher = operatorDispatcher;
         this.userDispatcher = userDispatcher;
+        this.callDispatcher = callDispatcher;
         this.operatorWS = operatorWS;
         this.chatWS = chatWS;
     }
@@ -218,5 +220,14 @@ public class PrivateResolvers {
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }
+    }
+
+    @PostMapping("calls")
+    private ResponseEntity<HttpResponse> getCalls(@RequestBody PageRequest body) {
+        if (body.getOffset() == null || body.getOffset() < 0)
+            return ResponseEntity.ok(HttpResponse.error("Offset не может быть отрицательным"));
+        if (body.getLimit() == null || body.getLimit() < 1)
+            return ResponseEntity.ok(HttpResponse.error("Limit не может быть меньше единицы"));
+        return ResponseEntity.ok(HttpResponse.of(callDispatcher.getPage(body)));
     }
 }

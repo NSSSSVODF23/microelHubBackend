@@ -1,2 +1,7 @@
+com\microel\microelhub\storage\entity\Call.class
 com\microel\microelhub\api\transport\WebChatConfigResponse.class
 com\microel\microelhub\services\ChatAndMessageTuple.class
+com\microel\microelhub\storage\entity\Call$CallBuilder.class
+com\microel\microelhub\storage\CallDispatcher.class
+com\microel\microelhub\storage\repository\CallRepository.class
+com\microel\microelhub\api\CallWS.class
