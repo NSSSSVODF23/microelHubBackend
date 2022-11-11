@@ -25,4 +25,8 @@ public class CallDispatcher {
     public Page<Call> getPage(PageRequest pageRequest) {
         return callRepository.findAll(new OffsetRequest(pageRequest.getOffset(), pageRequest.getLimit(), Sort.by(Sort.Direction.DESC, "created")));
     }
+
+    public Call getLastByPhone(String body) {
+        return callRepository.findTopByPhone(body, Sort.by(Sort.Direction.DESC,"created"));
+    }
 }

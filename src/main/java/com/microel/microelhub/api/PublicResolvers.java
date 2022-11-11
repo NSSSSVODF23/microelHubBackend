@@ -10,6 +10,7 @@ import com.microel.microelhub.storage.CallDispatcher;
 import com.microel.microelhub.storage.ChatDispatcher;
 import com.microel.microelhub.storage.ConfigurationDispatcher;
 import com.microel.microelhub.storage.MessageDispatcher;
+import com.microel.microelhub.storage.entity.Call;
 import com.microel.microelhub.storage.entity.Chat;
 import com.microel.microelhub.storage.entity.Configuration;
 import org.springframework.http.MediaType;
@@ -21,7 +22,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Time;
+import java.time.Instant;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 
 @Controller
 @RequestMapping("api/public")
@@ -129,6 +132,10 @@ public class PublicResolvers {
     @PostMapping("call")
     private ResponseEntity<HttpResponse> createCall(@RequestBody String body) {
         if (body == null || body.isBlank()) return ResponseEntity.ok(HttpResponse.error("Пустой номер телефона"));
+        Call call = callDispatcher.getLastByPhone(body);
+        if(call != null && call.getCreated().toInstant().plus(15, ChronoUnit.MINUTES).isBefore(Instant.now())){
+            return ResponseEntity.ok(HttpResponse.error("Слишком много запросов, попробуйте позже."));
+        }
         callWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, callDispatcher.create(body)));
         return ResponseEntity.ok(HttpResponse.of(null));
     }
