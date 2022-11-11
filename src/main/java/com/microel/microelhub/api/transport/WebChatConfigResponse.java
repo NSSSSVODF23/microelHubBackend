@@ -7,7 +7,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class IsWorkingResponse {
+public class WebChatConfigResponse {
     private Boolean isWork;
     private String warningMessage;
+    private String vkUrl;
+    private String telegramUrl;
 }

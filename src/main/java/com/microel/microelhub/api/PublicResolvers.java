@@ -1,7 +1,7 @@
 package com.microel.microelhub.api;
 
 import com.microel.microelhub.api.transport.HttpResponse;
-import com.microel.microelhub.api.transport.IsWorkingResponse;
+import com.microel.microelhub.api.transport.WebChatConfigResponse;
 import com.microel.microelhub.api.transport.LoginRequest;
 import com.microel.microelhub.api.transport.WebMessagesPage;
 import com.microel.microelhub.common.chat.Platform;
@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Time;
-import java.time.Instant;
 import java.time.LocalTime;
 
 @Controller
@@ -109,12 +108,17 @@ public class PublicResolvers {
         }
     }
 
-    @GetMapping("working")
+    @GetMapping("chat/config")
     private ResponseEntity<HttpResponse> getIsWorking() {
         Configuration config = configurationDispatcher.getLastConfig();
-        if(config.getStartWorkingDay() == null || config.getEndWorkingDay() == null) return ResponseEntity.ok(HttpResponse.of(new IsWorkingResponse(true, config.getWarning())));
-        return ResponseEntity.ok(HttpResponse.of(new IsWorkingResponse(
-                (config.getStartWorkingDay().before(Time.valueOf(LocalTime.now())) && config.getEndWorkingDay().after(Time.valueOf(LocalTime.now()))),
-                config.getWarning())));
+        if(config.getStartWorkingDay() == null || config.getEndWorkingDay() == null) return ResponseEntity.ok(HttpResponse.of(new WebChatConfigResponse(true, config.getWarning(), null, null)));
+        return ResponseEntity.ok(HttpResponse.of(
+                new WebChatConfigResponse(
+                    (config.getStartWorkingDay().before(Time.valueOf(LocalTime.now())) && config.getEndWorkingDay().after(Time.valueOf(LocalTime.now()))),
+                    config.getWarning(),
+                        "https://vk.com/im?sel=-"+config.getVkGroupId(),
+                        "https://telegram.me/"+config.getTlgBotUsername()
+                )
+        ));
     }
 }
