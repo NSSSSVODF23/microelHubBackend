@@ -133,7 +133,7 @@ public class PublicResolvers {
     private ResponseEntity<HttpResponse> createCall(@RequestBody String body) {
         if (body == null || body.isBlank()) return ResponseEntity.ok(HttpResponse.error("Пустой номер телефона"));
         Call call = callDispatcher.getLastByPhone(body);
-        if(call != null && call.getCreated().toInstant().plus(15, ChronoUnit.MINUTES).isBefore(Instant.now())){
+        if(call != null && call.getCreated().toInstant().plus(15, ChronoUnit.MINUTES).isAfter(Instant.now())){
             return ResponseEntity.ok(HttpResponse.error("Слишком много запросов, попробуйте позже."));
         }
         callWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, callDispatcher.create(body)));
