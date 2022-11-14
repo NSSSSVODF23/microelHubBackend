@@ -34,4 +34,12 @@ public class CallDispatcher {
     public List<Call> getUnprocessed() {
         return callRepository.findAllByProcessedIsNull();
     }
+
+    public Call getById(Long id) {
+        return callRepository.findById(id).orElse(null);
+    }
+
+    public Call save(Call call) {
+        return callRepository.save(call);
+    }
 }

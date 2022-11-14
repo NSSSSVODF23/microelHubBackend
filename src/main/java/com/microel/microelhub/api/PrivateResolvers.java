@@ -4,6 +4,7 @@ import com.microel.microelhub.api.transport.*;
 import com.microel.microelhub.common.UpdateType;
 import com.microel.microelhub.services.MessageAggregatorService;
 import com.microel.microelhub.storage.*;
+import com.microel.microelhub.storage.entity.Call;
 import com.microel.microelhub.storage.entity.Chat;
 import com.microel.microelhub.storage.entity.Message;
 import com.microel.microelhub.storage.entity.Operator;
@@ -23,10 +24,10 @@ public class PrivateResolvers {
     private final UserDispatcher userDispatcher;
     private final CallDispatcher callDispatcher;
     private final OperatorWS operatorWS;
-
+    private final CallWS callWS;
     private final ChatWS chatWS;
 
-    public PrivateResolvers(MessageAggregatorService messageAggregatorService, MessageDispatcher messageDispatcher, ChatDispatcher chatDispatcher, ConfigurationDispatcher configurationDispatcher, OperatorDispatcher operatorDispatcher, UserDispatcher userDispatcher, CallDispatcher callDispatcher, OperatorWS operatorWS, ChatWS chatWS) {
+    public PrivateResolvers(MessageAggregatorService messageAggregatorService, MessageDispatcher messageDispatcher, ChatDispatcher chatDispatcher, ConfigurationDispatcher configurationDispatcher, OperatorDispatcher operatorDispatcher, UserDispatcher userDispatcher, CallDispatcher callDispatcher, OperatorWS operatorWS, CallWS callWS, ChatWS chatWS) {
         this.messageAggregatorService = messageAggregatorService;
         this.messageDispatcher = messageDispatcher;
         this.chatDispatcher = chatDispatcher;
@@ -35,6 +36,7 @@ public class PrivateResolvers {
         this.userDispatcher = userDispatcher;
         this.callDispatcher = callDispatcher;
         this.operatorWS = operatorWS;
+        this.callWS = callWS;
         this.chatWS = chatWS;
     }
 
@@ -234,5 +236,20 @@ public class PrivateResolvers {
     @PostMapping("unprocessed-calls")
     private ResponseEntity<HttpResponse> getUnprocessedCalls() {
         return ResponseEntity.ok(HttpResponse.of(callDispatcher.getUnprocessed()));
+    }
+
+    @PostMapping("processing-calls")
+    private ResponseEntity<HttpResponse> setProcessingCalls(@RequestBody ProcessingCallsRequest body) {
+        if(body.getCallIds() == null) return ResponseEntity.ok(HttpResponse.error("Пустой массив идентификаторов обратных вызовов"));
+        if(body.getOperatorLogin() == null || body.getOperatorLogin().isBlank()) return ResponseEntity.ok(HttpResponse.error("Пустой логин оператора"));
+        final Operator foundOperator = operatorDispatcher.getByLogin(body.getOperatorLogin());
+        if(foundOperator == null) return ResponseEntity.ok(HttpResponse.error("Нет оператора с таким логином"));
+        body.getCallIds().forEach(id->{
+            final Call foundCall = callDispatcher.getById(id);
+            if(foundCall == null) return;
+            foundCall.setProcessed(foundOperator);
+            callWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE,callDispatcher.save(foundCall),"processing"));
+        });
+        return ResponseEntity.ok(HttpResponse.of(null));
     }
 }
