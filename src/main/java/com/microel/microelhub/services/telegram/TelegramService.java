@@ -123,4 +123,17 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
         }
         return null;
     }
+
+    public void sendNotification(String text){
+        Configuration config = configurationDispatcher.getLastConfig();
+        try {
+            if (config != null) {
+                if (config.getTlgNotificationChatId() != null) {
+                    sendMessage(config.getTlgNotificationChatId(), text);
+                }
+            }
+        }catch (Exception ignored){
+
+        }
+    }
 }

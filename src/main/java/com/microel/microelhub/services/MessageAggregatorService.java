@@ -80,10 +80,6 @@ public class MessageAggregatorService {
         Configuration config = configurationDispatcher.getLastConfig();
         try {
             if (config != null) {
-                if (config.getTlgNotificationChatId() != null) {
-                    telegramService.sendMessage(config.getTlgNotificationChatId(), "\uD83D\uDCAC Новый чат \n"
-                            + chat.getUser().getName() + " из " + platform.getLocalized());
-                }
                 if (config.getStartWorkingDay().before(Time.valueOf(LocalTime.now())) && config.getEndWorkingDay().after(Time.valueOf(LocalTime.now()))) {
                     sendMessage(chat.getChatId().toString(), config.getGreeting(), platform);
                 } else {
@@ -93,6 +89,8 @@ public class MessageAggregatorService {
         } catch (Exception e) {
             log.warn("Не удалось отправить сообщение приветствие {}", e.getMessage());
         }
+        telegramService.sendNotification("\uD83D\uDCAC Новый чат \n"
+                + chat.getUser().getName() + " из " + platform.getLocalized());
     }
 
     public void nextMessageFromUser(String userId, String text, String chatMsgId, String name, Platform platform, MessageAttachment... messageAttachment) {

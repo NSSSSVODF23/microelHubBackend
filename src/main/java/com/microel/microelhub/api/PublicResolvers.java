@@ -6,6 +6,7 @@ import com.microel.microelhub.common.chat.Platform;
 import com.microel.microelhub.security.AuthenticationManager;
 import com.microel.microelhub.services.internal.InternalService;
 import com.microel.microelhub.services.internal.Message;
+import com.microel.microelhub.services.telegram.TelegramService;
 import com.microel.microelhub.storage.CallDispatcher;
 import com.microel.microelhub.storage.ChatDispatcher;
 import com.microel.microelhub.storage.ConfigurationDispatcher;
@@ -37,8 +38,9 @@ public class PublicResolvers {
     private final MessageDispatcher messageDispatcher;
     private final CallWS callWS;
     private final ConfigurationDispatcher configurationDispatcher;
+    private final TelegramService telegramService;
 
-    public PublicResolvers(AuthenticationManager authenticationManager, InternalService internalService, ChatDispatcher chatDispatcher, CallDispatcher callDispatcher, MessageDispatcher messageDispatcher, CallWS callWS, ConfigurationDispatcher configurationDispatcher) {
+    public PublicResolvers(AuthenticationManager authenticationManager, InternalService internalService, ChatDispatcher chatDispatcher, CallDispatcher callDispatcher, MessageDispatcher messageDispatcher, CallWS callWS, ConfigurationDispatcher configurationDispatcher, TelegramService telegramService) {
         this.authenticationManager = authenticationManager;
         this.internalService = internalService;
         this.chatDispatcher = chatDispatcher;
@@ -46,6 +48,7 @@ public class PublicResolvers {
         this.messageDispatcher = messageDispatcher;
         this.callWS = callWS;
         this.configurationDispatcher = configurationDispatcher;
+        this.telegramService = telegramService;
     }
 
     @PostMapping("login")
@@ -137,6 +140,7 @@ public class PublicResolvers {
             return ResponseEntity.ok(HttpResponse.error("Слишком много запросов, попробуйте позже."));
         }
         callWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, callDispatcher.create(body)));
+        telegramService.sendNotification("\uD83D\uDCDE Новая заявка на обратный звонок");
         return ResponseEntity.ok(HttpResponse.of(null));
     }
 }

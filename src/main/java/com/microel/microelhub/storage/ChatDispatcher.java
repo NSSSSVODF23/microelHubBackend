@@ -60,13 +60,8 @@ public class ChatDispatcher {
         if (chat == null) throw new Exception("Не найден чат");
         Operator operator = operatorDispatcher.getByLogin(login);
         if (operator == null) throw new Exception("Не найден оператор по логину");
-        Configuration config = configurationDispatcher.getLastConfig();
-        if (config != null) {
-            if (config.getTlgNotificationChatId() != null) {
-                telegramService.sendMessage(config.getTlgNotificationChatId(), "⌨ Чат взят в работу\n"
-                        + chat.getUser().getPlatform().getLocalized() + " " + chat.getUser().getName() + "\nОператор: " + operator.getName());
-            }
-        }
+        telegramService.sendNotification("⌨ Чат взят в работу\n"
+                + chat.getUser().getPlatform().getLocalized() + " " + chat.getUser().getName() + "\nОператор: " + operator.getName());
         chat.setOperator(operator);
         chat.setLastMessage(Timestamp.from(Instant.now()));
         return chatRepository.save(chat);
