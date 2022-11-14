@@ -36,7 +36,14 @@ public class InternalService implements MessageSenderWrapper {
         String nextMessageId = getNextChatMessageId(message.getUserId().toString());
         messageAggregatorService.nextMessageFromUser(message.getUserId().toString(), message.getMessage(), nextMessageId, message.getUserId().toString(), Platform.INTERNAL);
         try {
-            webChatWS.sendUnicast(message.getUserId().toString(),ListUpdateWrapper.of(UpdateType.ADD, new Message(nextMessageId, message.getUserId(),message.getMessage(), false)));
+            webChatWS.sendUnicast(message.getUserId().toString(),ListUpdateWrapper.of(UpdateType.ADD, new Message(nextMessageId, message.getUserId(),message.getMessage(), false, false)));
+        } catch (Exception ignored) {
+        }
+    }
+
+    public void sendSystemMessage(String userId, String text) {
+        try {
+            webChatWS.sendUnicast(userId, ListUpdateWrapper.of(UpdateType.ADD, new Message("system", UUID.fromString(userId), text, true, true)));
         } catch (Exception ignored) {
         }
     }
@@ -45,7 +52,7 @@ public class InternalService implements MessageSenderWrapper {
     public String sendMessage(String userId, String text) {
         try {
             String messageId = getNextChatMessageId(userId);
-            webChatWS.sendUnicast(userId, ListUpdateWrapper.of(UpdateType.ADD, new Message(messageId, UUID.fromString(userId), text, true)));
+            webChatWS.sendUnicast(userId, ListUpdateWrapper.of(UpdateType.ADD, new Message(messageId, UUID.fromString(userId), text, true, false)));
             return messageId;
         } catch (Exception ignored) {
         }
@@ -54,11 +61,11 @@ public class InternalService implements MessageSenderWrapper {
 
     @Override
     public void editMessage(String userId, String chatMsgId, String text) throws Exception {
-        webChatWS.sendUnicast(userId, ListUpdateWrapper.of(UpdateType.UPDATE, new Message(chatMsgId, UUID.fromString(userId), text, true)));
+        webChatWS.sendUnicast(userId, ListUpdateWrapper.of(UpdateType.UPDATE, new Message(chatMsgId, UUID.fromString(userId), text, true, false)));
     }
 
     @Override
     public void deleteMessage(String userId, String chatMsgId) throws Exception {
-        webChatWS.sendUnicast(userId, ListUpdateWrapper.of(UpdateType.REMOVE, new Message(chatMsgId, UUID.fromString(userId), null, true)));
+        webChatWS.sendUnicast(userId, ListUpdateWrapper.of(UpdateType.REMOVE, new Message(chatMsgId, UUID.fromString(userId), null, true, false)));
     }
 }

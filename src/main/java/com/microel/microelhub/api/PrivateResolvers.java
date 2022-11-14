@@ -3,6 +3,7 @@ package com.microel.microelhub.api;
 import com.microel.microelhub.api.transport.*;
 import com.microel.microelhub.common.UpdateType;
 import com.microel.microelhub.services.MessageAggregatorService;
+import com.microel.microelhub.services.internal.InternalService;
 import com.microel.microelhub.storage.*;
 import com.microel.microelhub.storage.entity.Call;
 import com.microel.microelhub.storage.entity.Chat;
@@ -26,8 +27,9 @@ public class PrivateResolvers {
     private final OperatorWS operatorWS;
     private final CallWS callWS;
     private final ChatWS chatWS;
+    private final InternalService internalService;
 
-    public PrivateResolvers(MessageAggregatorService messageAggregatorService, MessageDispatcher messageDispatcher, ChatDispatcher chatDispatcher, ConfigurationDispatcher configurationDispatcher, OperatorDispatcher operatorDispatcher, UserDispatcher userDispatcher, CallDispatcher callDispatcher, OperatorWS operatorWS, CallWS callWS, ChatWS chatWS) {
+    public PrivateResolvers(MessageAggregatorService messageAggregatorService, MessageDispatcher messageDispatcher, ChatDispatcher chatDispatcher, ConfigurationDispatcher configurationDispatcher, OperatorDispatcher operatorDispatcher, UserDispatcher userDispatcher, CallDispatcher callDispatcher, OperatorWS operatorWS, CallWS callWS, ChatWS chatWS, InternalService internalService) {
         this.messageAggregatorService = messageAggregatorService;
         this.messageDispatcher = messageDispatcher;
         this.chatDispatcher = chatDispatcher;
@@ -38,6 +40,7 @@ public class PrivateResolvers {
         this.operatorWS = operatorWS;
         this.callWS = callWS;
         this.chatWS = chatWS;
+        this.internalService = internalService;
     }
 
     @PostMapping("send-message")
@@ -109,7 +112,9 @@ public class PrivateResolvers {
         if (request.getLogin() == null || request.getLogin().isBlank())
             return ResponseEntity.ok(HttpResponse.error("Пустой логин оператора"));
         try {
-            chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, chatDispatcher.changeOperator(request.getChatId(), request.getLogin()), "operator"));
+            Chat chat = chatDispatcher.changeOperator(request.getChatId(), request.getLogin());
+            chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, chat, "operator"));
+            internalService.sendSystemMessage(request.getChatId(), "Оператор "+chat.getOperator().getName()+" присоединился к чату");
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }

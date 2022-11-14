@@ -16,4 +16,5 @@ public class Message {
     private UUID userId;
     private String message;
     private Boolean operatorMsg;
+    private Boolean system;
 }
