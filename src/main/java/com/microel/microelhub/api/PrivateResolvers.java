@@ -2,6 +2,7 @@ package com.microel.microelhub.api;
 
 import com.microel.microelhub.api.transport.*;
 import com.microel.microelhub.common.UpdateType;
+import com.microel.microelhub.common.chat.Platform;
 import com.microel.microelhub.services.MessageAggregatorService;
 import com.microel.microelhub.services.internal.InternalService;
 import com.microel.microelhub.storage.*;
@@ -11,8 +12,11 @@ import com.microel.microelhub.storage.entity.Message;
 import com.microel.microelhub.storage.entity.Operator;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import java.sql.Timestamp;
 
 @Controller
 @RequestMapping("api/private")
@@ -46,7 +50,7 @@ public class PrivateResolvers {
     @PostMapping("send-message")
     private ResponseEntity<HttpResponse> sendMessage(@RequestBody SendMessageBody body) {
         try {
-            messageAggregatorService.sendMessage(body.getChatId(), body.getText(), body.getPlatform());
+            messageAggregatorService.sendMessage(body.getChatId(), body.getText(), body.getPlatform(), false);
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }
@@ -73,8 +77,8 @@ public class PrivateResolvers {
         return ResponseEntity.ok(HttpResponse.of(null));
     }
 
-    @PostMapping("messages")
-    private ResponseEntity<HttpResponse> getMessages(@RequestBody ChatMessagesRequest request) {
+    @PostMapping("user-messages")
+    private ResponseEntity<HttpResponse> getUserMessages(@RequestBody UserMessagesRequest request) {
         if (request.getOffset() == null || request.getOffset() < 0) {
             return ResponseEntity.ok(HttpResponse.error("Не верный offset"));
         }
@@ -84,6 +88,23 @@ public class PrivateResolvers {
         Page<Message> messages = null;
         try {
             messages = messageDispatcher.getMessagesFromUser(request.getUserId(), request.getPlatform(), request.getOffset(), request.getLimit());
+        } catch (Exception e) {
+            return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
+        }
+        return ResponseEntity.ok(HttpResponse.of(messages));
+    }
+
+    @PostMapping("chat-messages")
+    private ResponseEntity<HttpResponse> getChatMessages(@RequestBody ChatMessagesRequest request) {
+        if (request.getOffset() == null || request.getOffset() < 0) {
+            return ResponseEntity.ok(HttpResponse.error("Не верный offset"));
+        }
+        if (request.getLimit() == null || request.getLimit() < 1) {
+            return ResponseEntity.ok(HttpResponse.error("Не верный limit"));
+        }
+        Page<Message> messages = null;
+        try {
+            messages = messageDispatcher.getMessagesFromChat(request.getChatId(), request.getOffset(), request.getLimit());
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }
@@ -105,6 +126,29 @@ public class PrivateResolvers {
         }
     }
 
+    @GetMapping("chat")
+    private ResponseEntity<HttpResponse> getChat(@RequestParam @Nullable String chatId) {
+        if (chatId == null || chatId.isBlank()) {
+            return ResponseEntity.ok(HttpResponse.error("Пустой идентификатор чата"));
+        }
+        try {
+            return ResponseEntity.ok(HttpResponse.of(chatDispatcher.get(chatId)));
+        } catch (Exception e) {
+            return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
+        }
+    }
+
+    @GetMapping("chat-inactive")
+    private ResponseEntity<HttpResponse> messages(
+            @RequestParam @Nullable String query,
+            @RequestParam @Nullable String who,
+            @RequestParam @Nullable Timestamp start,
+            @RequestParam @Nullable Timestamp end,
+            @RequestParam Long offset,
+            @RequestParam Integer limit) {
+        return ResponseEntity.ok(HttpResponse.of(chatDispatcher.getFiltered(query, who, start, end, offset, limit)));
+    }
+
     @PatchMapping("chat-operator")
     private ResponseEntity<HttpResponse> changeChatOperator(@RequestBody ChangeChatOperatorRequest request) {
         if (request.getChatId() == null || request.getChatId().isBlank())
@@ -114,7 +158,7 @@ public class PrivateResolvers {
         try {
             Chat chat = chatDispatcher.changeOperator(request.getChatId(), request.getLogin());
             chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, chat, "operator"));
-            internalService.sendSystemMessage(chat.getUser().getUserId(), "Оператор "+chat.getOperator().getName()+" присоединился к чату");
+            internalService.sendSystemMessage(chat.getUser().getUserId(), "Оператор " + chat.getOperator().getName() + " присоединился к чату");
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }
@@ -214,7 +258,7 @@ public class PrivateResolvers {
     }
 
     @PostMapping("user-login")
-    private ResponseEntity<HttpResponse> setLoginToUser(@RequestBody UserSetPhoneRequest body){
+    private ResponseEntity<HttpResponse> setLoginToUser(@RequestBody UserSetPhoneRequest body) {
         try {
             userDispatcher.setLogin(body.getUserId(), body.getPlatform(), body.getLogin());
 
@@ -245,16 +289,40 @@ public class PrivateResolvers {
 
     @PostMapping("processing-calls")
     private ResponseEntity<HttpResponse> setProcessingCalls(@RequestBody ProcessingCallsRequest body) {
-        if(body.getCallIds() == null) return ResponseEntity.ok(HttpResponse.error("Пустой массив идентификаторов обратных вызовов"));
-        if(body.getOperatorLogin() == null || body.getOperatorLogin().isBlank()) return ResponseEntity.ok(HttpResponse.error("Пустой логин оператора"));
+        if (body.getCallIds() == null)
+            return ResponseEntity.ok(HttpResponse.error("Пустой массив идентификаторов обратных вызовов"));
+        if (body.getOperatorLogin() == null || body.getOperatorLogin().isBlank())
+            return ResponseEntity.ok(HttpResponse.error("Пустой логин оператора"));
         final Operator foundOperator = operatorDispatcher.getByLogin(body.getOperatorLogin());
-        if(foundOperator == null) return ResponseEntity.ok(HttpResponse.error("Нет оператора с таким логином"));
-        body.getCallIds().forEach(id->{
+        if (foundOperator == null) return ResponseEntity.ok(HttpResponse.error("Нет оператора с таким логином"));
+        body.getCallIds().forEach(id -> {
             final Call foundCall = callDispatcher.getById(id);
-            if(foundCall == null) return;
+            if (foundCall == null) return;
             foundCall.setProcessed(foundOperator);
-            callWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE,callDispatcher.save(foundCall),"processing"));
+            callWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, callDispatcher.save(foundCall), "processing"));
         });
         return ResponseEntity.ok(HttpResponse.of(null));
+    }
+
+    @GetMapping("chats/statistic/grouped/time/day")
+    private ResponseEntity<HttpResponse> getChatsStatisticGroupedByDay(@RequestParam @Nullable Platform platform, @RequestParam @Nullable String login, @RequestParam @Nullable String start, @RequestParam @Nullable String end) {
+        return ResponseEntity.ok(HttpResponse.of(chatDispatcher.getStatisticGroupedByDay(platform, login, start, end)));
+    }
+
+    @GetMapping("chats/statistic/grouped/{category}/{group}")
+    private ResponseEntity<HttpResponse> getChatsStatisticGroupedByCategory(@RequestParam @Nullable String start, @RequestParam @Nullable String end, @PathVariable String category, @PathVariable String group) {
+        switch (group) {
+            case "source":
+                return ResponseEntity.ok(HttpResponse.of(chatDispatcher.getStatisticGroupedBySource(category, start, end)));
+            case "operator":
+                return ResponseEntity.ok(HttpResponse.of(chatDispatcher.getStatisticGroupedByOperator(category, start, end)));
+            default:
+                return ResponseEntity.ok(HttpResponse.error("Не найден метод группировки статистики"));
+        }
+    }
+
+    @GetMapping("chats/statistic/ungrouped")
+    private ResponseEntity<HttpResponse> getChatStatisticUngrouped(@RequestParam @Nullable Platform platform, @RequestParam @Nullable String login, @RequestParam @Nullable String start, @RequestParam @Nullable String end) {
+        return ResponseEntity.ok(HttpResponse.of(chatDispatcher.getStatisticUngrouped(platform, login, start, end)));
     }
 }

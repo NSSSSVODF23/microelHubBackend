@@ -3,15 +3,19 @@ package com.microel.microelhub.storage;
 import com.microel.microelhub.common.chat.Platform;
 import com.microel.microelhub.services.telegram.TelegramService;
 import com.microel.microelhub.storage.entity.Chat;
-import com.microel.microelhub.storage.entity.Configuration;
 import com.microel.microelhub.storage.entity.Operator;
+import com.microel.microelhub.storage.proxies.CGroupStatisticData;
+import com.microel.microelhub.storage.proxies.RDStatisticPoint;
 import com.microel.microelhub.storage.repository.ChatRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,6 +49,7 @@ public class ChatDispatcher {
                 .chatId(UUID.randomUUID())
                 .created(Timestamp.from(Instant.now()))
                 .lastMessage(Timestamp.from(Instant.now()))
+                .messageCount(1)
                 .active(true)
                 .user(userDispatcher.upsert(userId, name, platform))
                 .build());
@@ -79,8 +84,15 @@ public class ChatDispatcher {
         return chatRepository.save(chat);
     }
 
-    public void updateLastMessageStamp(Chat chat) {
-        chat.setLastMessage(Timestamp.from(Instant.now()));
+    public void updateDetailedInfo(Chat chat, Boolean fromOperator) {
+        Timestamp now = Timestamp.from(Instant.now());
+        if(chat.getFirstMessage() == null && fromOperator) {
+            chat.setFirstMessage(now);
+            chat.setInitialDelay(now.getTime()-chat.getCreated().getTime());
+        }
+        chat.increaseMessagesCount();
+        chat.setLastMessage(now);
+        chat.setDuration(now.getTime() - chat.getCreated().getTime());
         chatRepository.save(chat);
     }
 
@@ -92,7 +104,7 @@ public class ChatDispatcher {
         return chatRepository.findAllByActiveOrderByLastMessageDesc(true);
     }
 
-    public void unreadIncrease(Chat chat) {
+    public void increaseUnread(Chat chat) {
         if (chat.getUnreadCount() == null) {
             chat.setUnreadCount(1);
         } else {
@@ -111,5 +123,57 @@ public class ChatDispatcher {
         if (chat == null) throw new Exception("Не найден чат");
         chat.setUnreadCount(0);
         return chatRepository.save(chat);
+    }
+
+    public Page<Chat> getFiltered(String query, String who, Timestamp start, Timestamp end, Long offset, Integer limit) {
+        String sStart = start != null ? start.toString() : null;
+        String sEnd = end != null ? end.toString() : null;
+        return chatRepository.getFilteredPage(query, who, sStart, sEnd, offset, limit, Pageable.unpaged());
+    }
+
+    public Chat get(String chatId) throws Exception {
+        Chat chat;
+        try {
+            chat = chatRepository.findById(UUID.fromString(chatId)).orElse(null);
+
+        } catch (IllegalArgumentException e) {
+            throw new Exception("Не верно задан идентификатор диалога");
+        }
+        if (chat == null) throw new Exception("Не удалось найти диалог с данным идентификатором");
+        return chat;
+    }
+
+    public List<RDStatisticPoint> getStatisticGroupedByDay(@Nullable Platform platform, @Nullable String login, @Nullable String start, @Nullable String end) {
+        Integer platformId = null;
+        if (platform != null) platformId = platform.ordinal();
+        return chatRepository.getStatisticGroupedByDay(platformId,login,start,end);
+    }
+
+    public RDStatisticPoint getStatisticUngrouped(@Nullable Platform platform, @Nullable String login, @Nullable String start, @Nullable String end) {
+        Integer platformId = null;
+        if (platform != null) platformId = platform.ordinal();
+        return chatRepository.getStatisticUngrouped(platformId,login,start,end);
+    }
+
+    public List<CGroupStatisticData> getStatisticGroupedBySource(String category, String start, String end) {
+        switch (category){
+            case "delay":
+                return chatRepository.getStatisticDelayGroupedBySource(start,end);
+            case "duration":
+                return chatRepository.getStatisticDurationGroupedBySource(start,end);
+            default:
+                return new ArrayList<>();
+        }
+    }
+
+    public List<CGroupStatisticData> getStatisticGroupedByOperator(String category, String start, String end) {
+        switch (category){
+            case "delay":
+                return chatRepository.getStatisticDelayGroupedByOperator(start,end);
+            case "duration":
+                return chatRepository.getStatisticDurationGroupedByOperator(start,end);
+            default:
+                return new ArrayList<>();
+        }
     }
 }

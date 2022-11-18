@@ -7,8 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ChatMessagesRequest {
-    private String userId;
-    private Platform platform;
+    private String chatId;
     private Long offset;
     private Integer limit;
 }

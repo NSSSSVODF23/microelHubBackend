@@ -81,9 +81,9 @@ public class MessageAggregatorService {
         try {
             if (config != null) {
                 if (config.getStartWorkingDay().before(Time.valueOf(LocalTime.now())) && config.getEndWorkingDay().after(Time.valueOf(LocalTime.now()))) {
-                    sendMessage(chat.getChatId().toString(), config.getGreeting(), platform);
+                    sendMessage(chat.getChatId().toString(), config.getGreeting(), platform, true);
                 } else {
-                    sendMessage(chat.getChatId().toString(), config.getWarning(), platform);
+                    sendMessage(chat.getChatId().toString(), config.getWarning(), platform, true);
                 }
             }
         } catch (Exception e) {
@@ -96,8 +96,8 @@ public class MessageAggregatorService {
     public void nextMessageFromUser(String userId, String text, String chatMsgId, String name, Platform platform, MessageAttachment... messageAttachment) {
         Chat chat = chatDispatcher.getLastByUserId(userId, platform);
         if (chat != null && chat.getActive()) {
-            chatDispatcher.updateLastMessageStamp(chat);
-            chatDispatcher.unreadIncrease(chat);
+            chatDispatcher.updateDetailedInfo(chat, false);
+            chatDispatcher.increaseUnread(chat);
             chatMessageWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, messageDispatcher.add(text, chatMsgId, chat, messageAttachment)));
             chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, chat, "unread"));
         } else {
@@ -113,17 +113,17 @@ public class MessageAggregatorService {
         if (message != null) {
             message.setEdited(true);
             message.setText(text);
-            chatDispatcher.updateLastMessageStamp(message.getChat());
+            chatDispatcher.updateDetailedInfo(message.getChat(), false);
             chatMessageWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, messageDispatcher.update(message)));
         }
     }
 
-    private void nextOperatorMessage(NewMessageHandle handle, String chatId, String text, Platform platform) throws Exception {
+    private void nextOperatorMessage(NewMessageHandle handle, String chatId, String text, Platform platform, Boolean isGreetingMsg) throws Exception {
         Chat chat = chatDispatcher.getLastByChatId(chatId, platform);
         if (chat != null && chat.getActive()) {
             String chatMsgId = handle.apply(chat.getUser().getUserId(), text);
             if (chatMsgId == null) throw new Exception("Не удалось отправить сообщение");
-            chatDispatcher.updateLastMessageStamp(chat);
+            chatDispatcher.updateDetailedInfo(chat, !isGreetingMsg);
             chatMessageWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, messageDispatcher.add(text, chatMsgId, chat, true)));
             return;
         }
@@ -148,19 +148,19 @@ public class MessageAggregatorService {
         }
     }
 
-    public void sendMessage(String chatId, String text, Platform platform) throws Exception {
+    public void sendMessage(String chatId, String text, Platform platform, Boolean isGreetingMsg) throws Exception {
         switch (platform) {
             case WHATSAPP:
                 log.warn("Отправка сообщений в WhatsApp не реализована");
                 break;
             case VK:
-                nextOperatorMessage(vkService::sendMessage, chatId, text, platform);
+                nextOperatorMessage(vkService::sendMessage, chatId, text, platform, isGreetingMsg);
                 break;
             case TELEGRAM:
-                nextOperatorMessage(telegramService::sendMessage, chatId, text, platform);
+                nextOperatorMessage(telegramService::sendMessage, chatId, text, platform, isGreetingMsg);
                 break;
             case INTERNAL:
-                nextOperatorMessage(internalService::sendMessage, chatId, text, platform);
+                nextOperatorMessage(internalService::sendMessage, chatId, text, platform, isGreetingMsg);
                 break;
             default:
                 throw new Exception("Платформа не найдена");
