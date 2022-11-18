@@ -103,7 +103,7 @@ public interface ChatRepository extends JpaRepository<Chat, UUID>, JpaSpecificat
             "       count(chat_id) filter ( where initial_delay < 30000 )                              AS s,\n" +
             "       count(chat_id) filter ( where initial_delay > 30000 AND initial_delay < 120000 )   AS m,\n" +
             "       count(chat_id) filter ( where initial_delay > 120000 AND initial_delay < 600000 )  AS l,\n" +
-            "       count(chat_id) filter ( where initial_delay > 600000 AND initial_delay < 1800000 ) AS x,\n" +
+            "       count(chat_id) filter ( where initial_delay > 600000 ) AS x,\n" +
             "       count(chat_id)                                            AS a,\n" +
             "       avg(initial_delay)                                        AS avg\n" +
             "FROM a_chats\n" +
@@ -118,10 +118,10 @@ public interface ChatRepository extends JpaRepository<Chat, UUID>, JpaSpecificat
             "                   AND (:end IS NULL OR chats.created <= cast(:end as timestamp))\n" +
             ")\n" +
             "SELECT platform AS grp ,\n" +
-            "       count(chat_id) filter ( where duration < 30000 )                                   AS s,\n" +
-            "       count(chat_id) filter ( where duration > 30000 AND duration < 120000 )             AS m,\n" +
-            "       count(chat_id) filter ( where duration > 120000 AND duration < 600000 )            AS l,\n" +
-            "       count(chat_id) filter ( where duration > 600000 AND duration < 1800000 )           AS x,\n" +
+            "       count(chat_id) filter ( where duration < 300000 )                                   AS s,\n" +
+            "       count(chat_id) filter ( where duration > 300000 AND duration < 900000 )             AS m,\n" +
+            "       count(chat_id) filter ( where duration > 900000 AND duration < 1800000 )            AS l,\n" +
+            "       count(chat_id) filter ( where duration > 1800000 )           AS x,\n" +
             "       count(chat_id)                                            AS a,\n" +
             "       avg(duration)                                        AS avg\n" +
             "FROM a_chats\n" +
@@ -139,7 +139,7 @@ public interface ChatRepository extends JpaRepository<Chat, UUID>, JpaSpecificat
             "       count(chat_id) filter ( where initial_delay < 30000 )                              AS s,\n" +
             "       count(chat_id) filter ( where initial_delay > 30000 AND initial_delay < 120000 )   AS m,\n" +
             "       count(chat_id) filter ( where initial_delay > 120000 AND initial_delay < 600000 )  AS l,\n" +
-            "       count(chat_id) filter ( where initial_delay > 600000 AND initial_delay < 1800000 ) AS x,\n" +
+            "       count(chat_id) filter ( where initial_delay > 600000 ) AS x,\n" +
             "       count(chat_id)                                            AS a,\n" +
             "       avg(initial_delay)                                        AS avg\n" +
             "FROM a_chats\n" +
@@ -154,10 +154,10 @@ public interface ChatRepository extends JpaRepository<Chat, UUID>, JpaSpecificat
             "                   AND (:end IS NULL OR chats.created <= cast(:end as timestamp))\n" +
             ")\n" +
             "SELECT name AS grp ,\n" +
-            "       count(chat_id) filter ( where duration < 30000 )                                   AS s,\n" +
-            "       count(chat_id) filter ( where duration > 30000 AND duration < 120000 )             AS m,\n" +
-            "       count(chat_id) filter ( where duration > 120000 AND duration < 600000 )            AS l,\n" +
-            "       count(chat_id) filter ( where duration > 600000 AND duration < 1800000 )           AS x,\n" +
+            "       count(chat_id) filter ( where duration < 300000 )                                   AS s,\n" +
+            "       count(chat_id) filter ( where duration > 300000 AND duration < 900000 )             AS m,\n" +
+            "       count(chat_id) filter ( where duration > 900000 AND duration < 1800000 )            AS l,\n" +
+            "       count(chat_id) filter ( where duration > 1800000 )           AS x,\n" +
             "       count(chat_id)                                            AS a,\n" +
             "       avg(duration)                                        AS avg\n" +
             "FROM a_chats\n" +
