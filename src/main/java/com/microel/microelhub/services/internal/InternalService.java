@@ -1,12 +1,15 @@
 package com.microel.microelhub.services.internal;
 
 import com.microel.microelhub.api.WebChatWS;
+import com.microel.microelhub.api.WebOperatorWS;
 import com.microel.microelhub.api.transport.ListUpdateWrapper;
+import com.microel.microelhub.api.transport.WebChatOperatorData;
 import com.microel.microelhub.common.UpdateType;
 import com.microel.microelhub.common.chat.Platform;
 import com.microel.microelhub.services.MessageAggregatorService;
 import com.microel.microelhub.services.MessageSenderWrapper;
 import com.microel.microelhub.storage.MessageDispatcher;
+import com.microel.microelhub.storage.entity.Operator;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -18,11 +21,13 @@ public class InternalService implements MessageSenderWrapper {
     private final MessageAggregatorService messageAggregatorService;
     private final MessageDispatcher messageDispatcher;
     private final WebChatWS webChatWS;
+    private final WebOperatorWS webOperatorWS;
 
-    public InternalService(@Lazy MessageAggregatorService messageAggregatorService, MessageDispatcher messageDispatcher, WebChatWS webChatWS) {
+    public InternalService(@Lazy MessageAggregatorService messageAggregatorService, MessageDispatcher messageDispatcher, WebChatWS webChatWS, WebOperatorWS webOperatorWS) {
         this.messageAggregatorService = messageAggregatorService;
         this.messageDispatcher = messageDispatcher;
         this.webChatWS = webChatWS;
+        this.webOperatorWS = webOperatorWS;
     }
 
     private String getNextChatMessageId(String userId) {
@@ -41,9 +46,9 @@ public class InternalService implements MessageSenderWrapper {
         }
     }
 
-    public void sendSystemMessage(String userId, String text) {
+    public void setOperatorToWebChat(String userId, Operator operator) {
         try {
-            webChatWS.sendUnicast(userId, ListUpdateWrapper.of(UpdateType.ADD, new Message("system", UUID.fromString(userId), text, true, true)));
+            webOperatorWS.sendUnicast(userId, WebChatOperatorData.from(operator));
         } catch (Exception ignored) {
         }
     }

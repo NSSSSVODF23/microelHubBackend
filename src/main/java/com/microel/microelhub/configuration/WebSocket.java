@@ -18,14 +18,16 @@ public class WebSocket implements WebSocketConfigurer {
     private final OperatorWS operatorWS;
     private final WebChatWS webChatWS;
     private final CallWS callWS;
+    private final WebOperatorWS webOperatorWS;
 
-    public WebSocket(ChatMessageWS chatMessageWS, ChatWS chatWs, ApisStatusWS apisStatusWS, OperatorWS operatorWS, WebChatWS webChatWS, CallWS callWS) {
+    public WebSocket(ChatMessageWS chatMessageWS, ChatWS chatWs, ApisStatusWS apisStatusWS, OperatorWS operatorWS, WebChatWS webChatWS, CallWS callWS, WebOperatorWS webOperatorWS) {
         this.chatMessageWS = chatMessageWS;
         this.chatWs = chatWs;
         this.apisStatusWS = apisStatusWS;
         this.operatorWS = operatorWS;
         this.webChatWS = webChatWS;
         this.callWS = callWS;
+        this.webOperatorWS = webOperatorWS;
     }
 
     @Override
@@ -36,5 +38,6 @@ public class WebSocket implements WebSocketConfigurer {
         registry.addHandler(operatorWS,"/api/ws/operators/{token}");
         registry.addHandler(webChatWS,"/api/ws/web-chat/{token}");
         registry.addHandler(callWS,"/api/ws/call/{token}");
+        registry.addHandler(webOperatorWS, "api/ws/web-operator/{token}");
     }
 }

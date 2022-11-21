@@ -158,7 +158,7 @@ public class PrivateResolvers {
         try {
             Chat chat = chatDispatcher.changeOperator(request.getChatId(), request.getLogin());
             chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, chat, "operator"));
-            internalService.sendSystemMessage(chat.getUser().getUserId(), "Оператор " + chat.getOperator().getName() + " присоединился к чату");
+            internalService.setOperatorToWebChat(chat.getUser().getUserId(), chat.getOperator());
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }

@@ -23,4 +23,5 @@ public class Operator {
     private Timestamp lastLogin;
     private Integer rating;
     private Boolean isOnline;
+    private String avatar;
 }
