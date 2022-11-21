@@ -48,6 +48,7 @@ C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\m
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\ChatDispatcher.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\LoginRequest.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\ChatWS.java
+C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\WebChatOperatorData.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\chat\NewMessageHandle.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\chat\DeleteMessageHandle.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\ProcessingCallsRequest.java
@@ -74,6 +75,7 @@ C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\m
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\HttpResponse.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\chat\Platform.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\WebChatConfigResponse.java
+C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\WebOperatorWS.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\entity\Configuration.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\UserDispatcher.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\services\MessageAggregatorService.java
