@@ -106,6 +106,14 @@ public class PublicResolvers {
         }
     }
 
+    @GetMapping("chat/operator/{id}")
+    private ResponseEntity<HttpResponse> getChatOperator(@PathVariable String id){
+        if (id == null || id.isBlank()) return ResponseEntity.ok(HttpResponse.error("Пустой идентификатор"));
+        Chat chat = chatDispatcher.getLastByUserId(id, Platform.INTERNAL);
+        if(chat == null || !chat.getActive()) return ResponseEntity.ok(HttpResponse.of(null));
+        return ResponseEntity.ok(HttpResponse.of(WebChatOperatorData.from(chat.getOperator())));
+    }
+
     @GetMapping("chat/active/{id}")
     private ResponseEntity<HttpResponse> getIsActiveChat(@PathVariable String id) {
         if (id == null) return ResponseEntity.ok(HttpResponse.error("Пустой идентификатор"));

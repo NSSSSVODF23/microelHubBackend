@@ -52,6 +52,16 @@ public class OperatorDispatcher {
         operatorRepository.save(foundedOperator);
     }
 
+    public Operator setAvatar(String login, String avatar) throws Exception {
+        if(login == null || login.isBlank()) throw new Exception("Логин не может быть пустым");
+        if(avatar == null || avatar.isBlank()) throw new Exception("Пароль не может быть пустым");
+
+        Operator foundedOperator = operatorRepository.findById(login).orElse(null);
+        if(foundedOperator == null) throw new Exception("Не найден оператор для редактирования "+login);
+        foundedOperator.setAvatar(avatar);
+        return operatorRepository.save(foundedOperator);
+    }
+
     public Page<Operator> getPage(PageRequest body) {
         return operatorRepository.findAll(new OffsetRequest(body.getOffset(),body.getLimit(), Sort.by(Sort.Direction.DESC, "created")));
     }

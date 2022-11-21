@@ -10,13 +10,18 @@ import com.microel.microelhub.storage.entity.Call;
 import com.microel.microelhub.storage.entity.Chat;
 import com.microel.microelhub.storage.entity.Message;
 import com.microel.microelhub.storage.entity.Operator;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Timestamp;
+import java.util.UUID;
 
 @Controller
 @RequestMapping("api/private")
@@ -207,6 +212,37 @@ public class PrivateResolvers {
         if (body.getLimit() == null || body.getLimit() < 1)
             return ResponseEntity.ok(HttpResponse.error("Limit не может быть меньше единицы"));
         return ResponseEntity.ok(HttpResponse.of(operatorDispatcher.getPage(body)));
+    }
+
+    @GetMapping("operator/{login}")
+    private ResponseEntity<HttpResponse> getOperator(@PathVariable String login) {
+        if (login == null || login.isBlank())
+            return ResponseEntity.ok(HttpResponse.error("Логин не может быть пустым"));
+        return ResponseEntity.ok(HttpResponse.of(operatorDispatcher.getByLogin(login)));
+    }
+
+    @PostMapping("operator/avatar")
+    private ResponseEntity<HttpResponse> setOperatorAvatar(@RequestBody UploadOperatorAvatarRequest body) throws IOException {
+        if (body.getLogin() == null || body.getLogin().isBlank())
+            return ResponseEntity.ok(HttpResponse.error("Логин оператора не может быть пустым"));
+        if (body.getImage() == null || body.getImage().isBlank())
+            return ResponseEntity.ok(HttpResponse.error("Требуется изображение для сохранения"));
+
+        byte[] photo = Base64.decodeBase64(body.getImage().split(",")[1]);
+        if (photo == null || photo.length == 0)
+            return ResponseEntity.ok(HttpResponse.error("Пустое декодированное изображение"));
+
+        UUID fileName = UUID.randomUUID();
+        Files.createDirectories(Path.of("./attachments", "photos"));
+        Files.write(Path.of("./attachments", "photos", fileName + ".jpg"), photo);
+
+        try {
+            operatorWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, operatorDispatcher.setAvatar(body.getLogin(), fileName.toString())));
+        } catch (Exception e) {
+            return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
+        }
+
+        return ResponseEntity.ok(HttpResponse.of(null));
     }
 
     @PostMapping("operator")
