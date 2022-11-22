@@ -114,7 +114,9 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
         videoToken.append("_").append(video.getId());
         if (video.getAccessKey() != null) videoToken.append("_").append(video.getAccessKey());
         try {
+            log.info("Отправка запроса {}", videoToken.toString());
             com.vk.api.sdk.objects.video.responses.GetResponse response = api.videos().get(userActor).videos(videoToken.toString()).execute();
+            log.info(response.toPrettyString());
             log.info(response.getItems().get(0).getFiles().toPrettyString());
         } catch (ApiException | ClientException e) {
             log.info("Ошибка получения видеозаписи {}", e.getMessage());
