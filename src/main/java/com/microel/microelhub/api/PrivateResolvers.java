@@ -5,6 +5,7 @@ import com.microel.microelhub.common.UpdateType;
 import com.microel.microelhub.common.chat.Platform;
 import com.microel.microelhub.services.MessageAggregatorService;
 import com.microel.microelhub.services.internal.InternalService;
+import com.microel.microelhub.services.vk.VkService;
 import com.microel.microelhub.storage.*;
 import com.microel.microelhub.storage.entity.Call;
 import com.microel.microelhub.storage.entity.Chat;
@@ -17,6 +18,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,6 +28,7 @@ import java.util.UUID;
 @Controller
 @RequestMapping("api/private")
 public class PrivateResolvers {
+
     private final MessageAggregatorService messageAggregatorService;
     private final MessageDispatcher messageDispatcher;
     private final ChatDispatcher chatDispatcher;
@@ -244,6 +247,8 @@ public class PrivateResolvers {
 
         return ResponseEntity.ok(HttpResponse.of(null));
     }
+
+
 
     @PostMapping("operator")
     private ResponseEntity<HttpResponse> addOperator(@RequestBody Operator operator) {

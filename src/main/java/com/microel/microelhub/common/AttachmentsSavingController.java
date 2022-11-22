@@ -37,10 +37,8 @@ public class AttachmentsSavingController {
                 return null;
             case VIDEO:
                 try {
-                    log.info("Ссылка на видео {}", uri);
                     byte[] video = new RestTemplate().getForObject(uri, byte[].class);
                     if (video != null) {
-                        log.info("Размер видео {}", video.length);
                         UUID fileName = UUID.randomUUID();
                         Files.createDirectories(Path.of("./attachments", "videos"));
                         Files.write(Path.of("./attachments", "videos", fileName + ".mp4"), video);
@@ -55,5 +53,10 @@ public class AttachmentsSavingController {
                 return null;
         }
         return null;
+    }
+
+    public MessageAttachment appendLink(String description, String data){
+        UUID uuid = UUID.randomUUID();
+        return messageAttachmentDispatcher.create(uuid, AttachmentType.LINK, description, data);
     }
 }

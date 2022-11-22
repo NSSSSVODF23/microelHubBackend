@@ -20,4 +20,8 @@ public class MessageAttachmentDispatcher {
     public MessageAttachment create(UUID uuid, AttachmentType type){
         return messageAttachmentRepository.save(MessageAttachment.builder().attachmentId(uuid).attachmentType(type).created(Timestamp.from(Instant.now())).build());
     }
+
+    public MessageAttachment create(UUID uuid, AttachmentType type, String description, String data){
+        return messageAttachmentRepository.save(MessageAttachment.builder().attachmentId(uuid).attachmentType(type).description(description).data(data).created(Timestamp.from(Instant.now())).build());
+    }
 }

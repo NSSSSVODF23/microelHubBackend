@@ -17,6 +17,8 @@ import com.vk.api.sdk.objects.users.responses.GetResponse;
 import com.vk.api.sdk.objects.video.Video;
 import lombok.extern.slf4j.Slf4j;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,13 +51,10 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
             List<MessageAttachment> messageAttachments = new ArrayList<>();
             message.getAttachments().forEach(messageAttachment -> {
                 MessageAttachment attachment = null;
-                log.info("Taken: {}", messageAttachment.getType().getValue());
                 switch (messageAttachment.getType()) {
                     case VIDEO:
                         Video video = messageAttachment.getVideo();
-                        log.info(video.toPrettyString());
-                        getVideoUrl(video);
-                        attachment = saveAttachment(video);
+                        messageAttachments.addAll(saveAttachment(video));
                         break;
                     case PHOTO:
                         Photo photo = messageAttachment.getPhoto();
@@ -105,23 +104,17 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
         return attachmentsSavingController.downloadAndSave(photo.getUrl().toString(), AttachmentType.PHOTO);
     }
 
-    private MessageAttachment saveAttachment(Video video) {
-        return attachmentsSavingController.downloadAndSave(video.getPlayer().toString(), AttachmentType.VIDEO);
-    }
+    private List<MessageAttachment> saveAttachment(Video... video) {
+        List<MessageAttachment> attachments = new ArrayList<>();
 
-    private String getVideoUrl(Video video) {
-        StringBuilder videoToken = new StringBuilder();
-        videoToken.append(video.getOwnerId().toString());
-        videoToken.append("_").append(video.getId());
-        if (video.getAccessKey() != null) videoToken.append("_").append(video.getAccessKey());
-        try {
-            log.info("Отправка запроса {}", videoToken.toString());
-            com.vk.api.sdk.objects.video.responses.GetResponse response = api.videos().get(userActor).videos(videoToken.toString()).execute();
-            log.info(response.toPrettyString());
-            log.info(response.getItems().get(0).getFiles().toPrettyString());
-        } catch (ApiException | ClientException e) {
-            log.info("Ошибка получения видеозаписи {}", e.getMessage());
+        for (Video v : video) {
+            StringBuilder videoToken = new StringBuilder();
+            videoToken.append(v.getOwnerId().toString());
+            videoToken.append("_").append(v.getId());
+            if (v.getAccessKey() != null) videoToken.append("_").append(v.getAccessKey());
+            attachments.add(attachmentsSavingController.appendLink("Видео " + v.getTitle(), videoToken.toString()));
         }
-        return null;
+
+        return attachments;
     }
 }

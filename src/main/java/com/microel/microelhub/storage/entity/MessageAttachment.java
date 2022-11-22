@@ -19,5 +19,7 @@ public class MessageAttachment {
     @Column(nullable = false)
     private UUID attachmentId;
     private AttachmentType attachmentType;
+    private String description;
+    private String data;
     private Timestamp created;
 }

@@ -7,22 +7,21 @@ import com.microel.microelhub.security.AuthenticationManager;
 import com.microel.microelhub.services.internal.InternalService;
 import com.microel.microelhub.services.internal.Message;
 import com.microel.microelhub.services.telegram.TelegramService;
+import com.microel.microelhub.services.vk.VkService;
 import com.microel.microelhub.storage.*;
 import com.microel.microelhub.storage.entity.Call;
 import com.microel.microelhub.storage.entity.Chat;
 import com.microel.microelhub.storage.entity.Configuration;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Time;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
@@ -31,6 +30,7 @@ import java.time.temporal.ChronoUnit;
 @RequestMapping("api/public")
 public class PublicResolvers {
 
+    private final VkService vkService;
     private final AuthenticationManager authenticationManager;
     private final InternalService internalService;
     private final ChatDispatcher chatDispatcher;
@@ -40,7 +40,8 @@ public class PublicResolvers {
     private final ConfigurationDispatcher configurationDispatcher;
     private final TelegramService telegramService;
 
-    public PublicResolvers(AuthenticationManager authenticationManager, InternalService internalService, ChatDispatcher chatDispatcher, CallDispatcher callDispatcher, MessageDispatcher messageDispatcher, CallWS callWS, ConfigurationDispatcher configurationDispatcher, TelegramService telegramService) {
+    public PublicResolvers(VkService vkService, AuthenticationManager authenticationManager, InternalService internalService, ChatDispatcher chatDispatcher, CallDispatcher callDispatcher, MessageDispatcher messageDispatcher, CallWS callWS, ConfigurationDispatcher configurationDispatcher, TelegramService telegramService) {
+        this.vkService = vkService;
         this.authenticationManager = authenticationManager;
         this.internalService = internalService;
         this.chatDispatcher = chatDispatcher;
@@ -87,6 +88,12 @@ public class PublicResolvers {
         } catch (IOException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping("video/vk/{identifier}")
+    public void redirectToVideo(HttpServletResponse httpServletResponse, @PathVariable String identifier) {
+        httpServletResponse.setHeader("Location", vkService.getVideoLink(identifier));
+        httpServletResponse.setStatus(302);
     }
 
     @PostMapping("chat/message")

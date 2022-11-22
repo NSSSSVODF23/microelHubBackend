@@ -14,16 +14,14 @@ import com.vk.api.sdk.client.actors.UserActor;
 import com.vk.api.sdk.exceptions.ApiException;
 import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.httpclient.HttpTransportClient;
-import com.vk.api.sdk.objects.video.Video;
+import com.vk.api.sdk.objects.video.VideoFull;
 import com.vk.api.sdk.objects.video.responses.GetResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static java.lang.Thread.sleep;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Service
@@ -54,7 +52,7 @@ public class VkService implements MessageSenderWrapper {
         }
 
         groupActor = new GroupActor(Integer.parseInt(configuration.getVkGroupId()), configuration.getVkGroupToken());
-        userActor = new UserActor(33474398,"vk1.a.EhsqH9D9K1hrD-WZFEEJ4Vj0xiiu9iH0ng1TWVIpPn73WB5lnep0fWqX6x7SIJkI2sSozl9urutsglN2lMwG4YvNxsHpAKGJmyafaBlTo5q9NHwFbwdQLgSokEgrMu5E7z1tCo9m_9G9jeqNNQP3IJVsK-LhsLaVMzkf0-WpcpgbxK5dhLclbE0AoOOgaU--HolTy2Y0Lnlr-wQZseIFug");
+        userActor = new UserActor(33474398, "vk1.a.EhsqH9D9K1hrD-WZFEEJ4Vj0xiiu9iH0ng1TWVIpPn73WB5lnep0fWqX6x7SIJkI2sSozl9urutsglN2lMwG4YvNxsHpAKGJmyafaBlTo5q9NHwFbwdQLgSokEgrMu5E7z1tCo9m_9G9jeqNNQP3IJVsK-LhsLaVMzkf0-WpcpgbxK5dhLclbE0AoOOgaU--HolTy2Y0Lnlr-wQZseIFug");
 
         try {
             api.groups().getTokenPermissions(groupActor).execute();
@@ -64,7 +62,7 @@ public class VkService implements MessageSenderWrapper {
         }
 
         try {
-            api.groups().setLongPollSettings(groupActor, Integer.parseInt(configuration.getVkGroupId())).enabled(true).apiVersion("5.95")
+            api.groups().setLongPollSettings(groupActor, Integer.parseInt(configuration.getVkGroupId())).enabled(true).apiVersion("5.102")
                     .messageNew(true).messageDeny(false).messageAllow(false).messageEdit(false)
                     .execute();
         } catch (Exception e) {
@@ -111,4 +109,15 @@ public class VkService implements MessageSenderWrapper {
     }
 
 
+    public String getVideoLink(String identifier) {
+        try {
+            GetResponse response = api.videos().get(userActor).videos(identifier).execute();
+            VideoFull videoFull = response.getItems().get(0);
+            if (videoFull == null) return null;
+            return URLDecoder.decode(response.getItems().get(0).getPlayer().toString(), StandardCharsets.UTF_8);
+        } catch (ApiException | ClientException e) {
+            log.info("Ошибка получения видеозаписи {}", e.getMessage());
+        }
+        return null;
+    }
 }
