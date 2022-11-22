@@ -7,6 +7,9 @@ import com.microel.microelhub.services.MessageAggregatorService;
 import com.microel.microelhub.storage.entity.MessageAttachment;
 import com.vk.api.sdk.client.VkApiClient;
 import com.vk.api.sdk.client.actors.GroupActor;
+import com.vk.api.sdk.client.actors.UserActor;
+import com.vk.api.sdk.exceptions.ApiException;
+import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.objects.messages.Message;
 import com.vk.api.sdk.objects.photos.Photo;
 import com.vk.api.sdk.objects.photos.PhotoSizes;
@@ -22,13 +25,15 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
 
     private final VkApiClient api;
     private final GroupActor actor;
+    private final UserActor userActor;
     private final MessageAggregatorService messageAggregatorService;
     private final AttachmentsSavingController attachmentsSavingController;
 
-    public VkUpdateHandler(VkApiClient client, GroupActor actor, int waitTime, MessageAggregatorService messageAggregatorService, AttachmentsSavingController attachmentsSavingController) {
+    public VkUpdateHandler(VkApiClient client, GroupActor actor, UserActor userActor, int waitTime, MessageAggregatorService messageAggregatorService, AttachmentsSavingController attachmentsSavingController) {
         super(client, actor, waitTime);
         this.api = client;
         this.actor = actor;
+        this.userActor = userActor;
         this.messageAggregatorService = messageAggregatorService;
         this.attachmentsSavingController = attachmentsSavingController;
     }
@@ -47,6 +52,7 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
                 switch (messageAttachment.getType()) {
                     case VIDEO:
                         Video video = messageAttachment.getVideo();
+                        getVideoUrl(video);
                         log.info(video.toPrettyString());
                         attachment = saveAttachment(video);
                         break;
@@ -100,5 +106,18 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
 
     private MessageAttachment saveAttachment(Video video) {
         return attachmentsSavingController.downloadAndSave(video.getPlayer().toString(), AttachmentType.VIDEO);
+    }
+
+    private String getVideoUrl(Video video){
+        StringBuilder videoToken = new StringBuilder(video.getOwnerId());
+        videoToken.append("_").append(video.getId());
+        if(video.getAccessKey() != null) videoToken.append("_").append(video.getAccessKey());
+        try {
+            com.vk.api.sdk.objects.video.responses.GetResponse response = api.videos().get(userActor).videos(videoToken.toString()).execute();
+            log.info(response.getItems().get(0).getFiles().toPrettyString());
+        } catch (ApiException | ClientException e) {
+            log.info("Ошибка получения видеозаписи {}",e.getMessage());
+        }
+        return null;
     }
 }

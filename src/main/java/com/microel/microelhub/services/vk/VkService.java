@@ -10,9 +10,12 @@ import com.microel.microelhub.storage.entity.Configuration;
 import com.vk.api.sdk.client.TransportClient;
 import com.vk.api.sdk.client.VkApiClient;
 import com.vk.api.sdk.client.actors.GroupActor;
+import com.vk.api.sdk.client.actors.UserActor;
 import com.vk.api.sdk.exceptions.ApiException;
 import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.httpclient.HttpTransportClient;
+import com.vk.api.sdk.objects.video.Video;
+import com.vk.api.sdk.objects.video.responses.GetResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,7 @@ import static java.lang.Thread.sleep;
 public class VkService implements MessageSenderWrapper {
     private final VkApiClient api;
     private GroupActor groupActor;
+    private UserActor userActor;
     private VkUpdateHandler pollHandler;
     private final ConfigurationDispatcher configurationDispatcher;
     private final StatedApiService statedApiService;
@@ -50,6 +54,7 @@ public class VkService implements MessageSenderWrapper {
         }
 
         groupActor = new GroupActor(Integer.parseInt(configuration.getVkGroupId()), configuration.getVkGroupToken());
+        userActor = new UserActor(33474398,"vk1.a.EhsqH9D9K1hrD-WZFEEJ4Vj0xiiu9iH0ng1TWVIpPn73WB5lnep0fWqX6x7SIJkI2sSozl9urutsglN2lMwG4YvNxsHpAKGJmyafaBlTo5q9NHwFbwdQLgSokEgrMu5E7z1tCo9m_9G9jeqNNQP3IJVsK-LhsLaVMzkf0-WpcpgbxK5dhLclbE0AoOOgaU--HolTy2Y0Lnlr-wQZseIFug");
 
         try {
             api.groups().getTokenPermissions(groupActor).execute();
@@ -67,7 +72,7 @@ public class VkService implements MessageSenderWrapper {
             return;
         }
 
-        pollHandler = new VkUpdateHandler(api, groupActor, 35, messageAggregatorService, attachmentsSavingController);
+        pollHandler = new VkUpdateHandler(api, groupActor, userActor, 35, messageAggregatorService, attachmentsSavingController);
         pollHandler.run();
 
         statedApiService.logStatusChange(Platform.VK, "API инициализирован успешно");
@@ -104,4 +109,6 @@ public class VkService implements MessageSenderWrapper {
             throw new Exception("Не удалось удалить сообщение: " + e.getMessage());
         }
     }
+
+
 }
