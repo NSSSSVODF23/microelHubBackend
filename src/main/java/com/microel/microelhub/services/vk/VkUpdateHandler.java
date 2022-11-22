@@ -7,11 +7,11 @@ import com.microel.microelhub.services.MessageAggregatorService;
 import com.microel.microelhub.storage.entity.MessageAttachment;
 import com.vk.api.sdk.client.VkApiClient;
 import com.vk.api.sdk.client.actors.GroupActor;
-import com.vk.api.sdk.objects.callback.MessageAllow;
 import com.vk.api.sdk.objects.messages.Message;
 import com.vk.api.sdk.objects.photos.Photo;
 import com.vk.api.sdk.objects.photos.PhotoSizes;
 import com.vk.api.sdk.objects.users.responses.GetResponse;
+import com.vk.api.sdk.objects.video.Video;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -44,11 +44,17 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
 
             List<MessageAttachment> messageAttachments = new ArrayList<>();
             message.getAttachments().forEach(messageAttachment -> {
+                MessageAttachment attachment = null;
+                Video video = messageAttachment.getVideo();
                 Photo photo = messageAttachment.getPhoto();
-                if (photo == null) return;
-                PhotoSizes size = photo.getSizes().stream().min((o1, o2) -> (o2.getWidth() + o2.getHeight()) - (o1.getWidth() + o1.getHeight())).orElse(null);
-                if (size == null) return;
-                MessageAttachment attachment = savePhoto(size);
+                if (photo != null) {
+                    PhotoSizes size = photo.getSizes().stream().min((o1, o2) -> (o2.getWidth() + o2.getHeight()) - (o1.getWidth() + o1.getHeight())).orElse(null);
+                    if (size == null) return;
+                    attachment = saveAttachment(size);
+                }
+                if (video != null) {
+                    attachment = saveAttachment(video);
+                }
                 if (attachment != null) {
                     messageAttachments.add(attachment);
                 }
@@ -85,8 +91,11 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
         }
     }
 
-    private MessageAttachment savePhoto(PhotoSizes photo) {
+    private MessageAttachment saveAttachment(PhotoSizes photo) {
         return attachmentsSavingController.downloadAndSave(photo.getUrl().toString(), AttachmentType.PHOTO);
     }
 
+    private MessageAttachment saveAttachment(Video video) {
+        return attachmentsSavingController.downloadAndSave(video.getPlayer().toString(), AttachmentType.VIDEO);
+    }
 }
