@@ -48,9 +48,10 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
                 Video video = messageAttachment.getVideo();
                 Photo photo = messageAttachment.getPhoto();
                 if (photo != null) {
+                    log.info(photo.toPrettyString());
                     PhotoSizes size = photo.getSizes().stream().min((o1, o2) -> (o2.getWidth() + o2.getHeight()) - (o1.getWidth() + o1.getHeight())).orElse(null);
-                    if (size == null) return;
-                    attachment = saveAttachment(size);
+                    if (size != null)
+                        attachment = saveAttachment(size);
                 }
                 if (video != null) {
                     attachment = saveAttachment(video);
