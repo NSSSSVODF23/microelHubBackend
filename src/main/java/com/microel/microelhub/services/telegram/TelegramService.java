@@ -69,11 +69,7 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
                 fullName += " " + user.getLastName();
             }
 
-            if (message.hasPhoto()) {
-                MessageAttachment messageAttachment = this.saveAttachment(message.getPhoto().get(message.getPhoto().size() - 1));
-                if (messageAttachment != null)
-                    messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
-            } else if (message.hasVideo()) {
+            if (message.hasVideo()) {
                 MessageAttachment messageAttachment = this.saveAttachment(message.getVideo());
                 if (messageAttachment != null)
                     messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
@@ -81,7 +77,11 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
                 MessageAttachment messageAttachment = this.saveAttachment(message.getVideoNote());
                 if (messageAttachment != null)
                     messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
-            } else {
+            } else if (message.hasPhoto()) {
+                MessageAttachment messageAttachment = this.saveAttachment(message.getPhoto().get(message.getPhoto().size() - 1));
+                if (messageAttachment != null)
+                    messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
+            } else   {
                 messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getText(), message.getMessageId().toString(), fullName, Platform.TELEGRAM);
             }
 

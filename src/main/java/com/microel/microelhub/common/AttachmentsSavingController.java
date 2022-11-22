@@ -47,7 +47,6 @@ public class AttachmentsSavingController {
                 } catch (Exception e) {
                     log.warn("Не удалось сохранить видео {}", e.getMessage());
                 }
-                log.warn("Сохранение видео не реализовано");
                 return null;
             case DOCUMENT:
                 log.warn("Сохранение документов не реализовано");
