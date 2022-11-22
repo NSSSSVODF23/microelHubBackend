@@ -46,6 +46,7 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
             message.getAttachments().forEach(messageAttachment -> {
                 MessageAttachment attachment = null;
                 Video video = messageAttachment.getVideo();
+                log.info(messageAttachment.getType().getValue());
                 Photo photo = messageAttachment.getPhoto();
                 if (photo != null) {
                     log.info(photo.toPrettyString());
