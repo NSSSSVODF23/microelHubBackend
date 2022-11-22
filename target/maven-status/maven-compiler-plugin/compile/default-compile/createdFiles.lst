@@ -1,4 +1,5 @@
 com\microel\microelhub\storage\entity\Call.class
+com\microel\microelhub\services\vk\VkUpdateHandler$1.class
 com\microel\microelhub\services\ChatAndMessageTuple.class
 com\microel\microelhub\storage\entity\Call$CallBuilder.class
 com\microel\microelhub\storage\CallDispatcher.class

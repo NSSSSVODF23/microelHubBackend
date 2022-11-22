@@ -41,22 +41,23 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
     @Override
     public void messageNew(Integer groupId, Message message) {
         try {
-
             List<MessageAttachment> messageAttachments = new ArrayList<>();
             message.getAttachments().forEach(messageAttachment -> {
                 MessageAttachment attachment = null;
-                Video video = messageAttachment.getVideo();
-                log.info(messageAttachment.getType().getValue());
-                Photo photo = messageAttachment.getPhoto();
-                if (photo != null) {
-                    log.info(photo.toPrettyString());
-                    PhotoSizes size = photo.getSizes().stream().min((o1, o2) -> (o2.getWidth() + o2.getHeight()) - (o1.getWidth() + o1.getHeight())).orElse(null);
-                    if (size != null)
-                        attachment = saveAttachment(size);
+                switch (messageAttachment.getType()) {
+                    case VIDEO:
+                        Video video = messageAttachment.getVideo();
+                        log.info(video.toPrettyString());
+                        attachment = saveAttachment(video);
+                        break;
+                    case PHOTO:
+                        Photo photo = messageAttachment.getPhoto();
+                        PhotoSizes size = photo.getSizes().stream().min((o1, o2) -> (o2.getWidth() + o2.getHeight()) - (o1.getWidth() + o1.getHeight())).orElse(null);
+                        if (size != null)
+                            attachment = saveAttachment(size);
+                        break;
                 }
-                if (video != null) {
-                    attachment = saveAttachment(video);
-                }
+
                 if (attachment != null) {
                     messageAttachments.add(attachment);
                 }
