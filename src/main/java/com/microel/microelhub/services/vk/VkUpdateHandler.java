@@ -110,7 +110,8 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
     }
 
     private String getVideoUrl(Video video) {
-        StringBuilder videoToken = new StringBuilder(video.getOwnerId());
+        StringBuilder videoToken = new StringBuilder();
+        videoToken.append(video.getOwnerId().toString());
         videoToken.append("_").append(video.getId());
         if (video.getAccessKey() != null) videoToken.append("_").append(video.getAccessKey());
         try {

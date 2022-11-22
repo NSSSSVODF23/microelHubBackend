@@ -56,6 +56,7 @@ C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\m
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\repository\CallRepository.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\AbstractWebSocketHandler.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\ChangeConfigBody.java
+C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\UploadOperatorAvatarRequest.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\services\MessageSenderWrapper.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\ChatMessageWS.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\repository\UserRepository.java
