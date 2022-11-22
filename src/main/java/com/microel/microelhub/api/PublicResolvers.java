@@ -79,6 +79,16 @@ public class PublicResolvers {
         }
     }
 
+    @GetMapping("video/{id}")
+    private ResponseEntity<byte[]> getVideo(@PathVariable String id) {
+        try {
+            byte[] video = Files.readAllBytes(Path.of("./attachments", "videos", id + ".mp4"));
+            return ResponseEntity.ok().contentType(MediaType.valueOf("video/mp4")).contentLength(video.length).body(video);
+        } catch (IOException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @PostMapping("chat/message")
     private ResponseEntity<HttpResponse> getMessage(@RequestBody Message body) {
         if (body.getUserId() == null)
