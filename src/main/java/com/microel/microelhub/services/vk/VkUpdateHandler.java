@@ -49,11 +49,12 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
             List<MessageAttachment> messageAttachments = new ArrayList<>();
             message.getAttachments().forEach(messageAttachment -> {
                 MessageAttachment attachment = null;
+                log.info("Taken: {}", messageAttachment.getType().getValue());
                 switch (messageAttachment.getType()) {
                     case VIDEO:
                         Video video = messageAttachment.getVideo();
-                        getVideoUrl(video);
                         log.info(video.toPrettyString());
+                        getVideoUrl(video);
                         attachment = saveAttachment(video);
                         break;
                     case PHOTO:
@@ -108,15 +109,15 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
         return attachmentsSavingController.downloadAndSave(video.getPlayer().toString(), AttachmentType.VIDEO);
     }
 
-    private String getVideoUrl(Video video){
+    private String getVideoUrl(Video video) {
         StringBuilder videoToken = new StringBuilder(video.getOwnerId());
         videoToken.append("_").append(video.getId());
-        if(video.getAccessKey() != null) videoToken.append("_").append(video.getAccessKey());
+        if (video.getAccessKey() != null) videoToken.append("_").append(video.getAccessKey());
         try {
             com.vk.api.sdk.objects.video.responses.GetResponse response = api.videos().get(userActor).videos(videoToken.toString()).execute();
             log.info(response.getItems().get(0).getFiles().toPrettyString());
         } catch (ApiException | ClientException e) {
-            log.info("Ошибка получения видеозаписи {}",e.getMessage());
+            log.info("Ошибка получения видеозаписи {}", e.getMessage());
         }
         return null;
     }
