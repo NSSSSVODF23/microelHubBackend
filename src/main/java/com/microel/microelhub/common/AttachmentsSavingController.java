@@ -36,6 +36,17 @@ public class AttachmentsSavingController {
                 }
                 return null;
             case VIDEO:
+                try {
+                    byte[] video = new RestTemplate().getForObject(uri, byte[].class);
+                    if (video != null) {
+                        UUID fileName = UUID.randomUUID();
+                        Files.createDirectories(Path.of("./attachments","videos"));
+                        Files.write(Path.of("./attachments", "videos", fileName + ".mp4"), video);
+                        return messageAttachmentDispatcher.create(fileName,AttachmentType.VIDEO);
+                    }
+                } catch (Exception e) {
+                    log.warn("Не удалось сохранить видео {}", e.getMessage());
+                }
                 log.warn("Сохранение видео не реализовано");
                 return null;
             case DOCUMENT:

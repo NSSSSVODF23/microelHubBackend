@@ -70,12 +70,21 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
             }
 
             if (message.hasPhoto()) {
-                MessageAttachment messageAttachment = this.savePhoto(message.getPhoto().get(message.getPhoto().size() - 1));
+                MessageAttachment messageAttachment = this.saveAttachment(message.getPhoto().get(message.getPhoto().size() - 1));
+                if (messageAttachment != null)
+                    messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
+            } else if (message.hasVideo()) {
+                MessageAttachment messageAttachment = this.saveAttachment(message.getVideo());
+                if (messageAttachment != null)
+                    messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
+            } else if (message.hasVideoNote()) {
+                MessageAttachment messageAttachment = this.saveAttachment(message.getVideoNote());
                 if (messageAttachment != null)
                     messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
             } else {
                 messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getText(), message.getMessageId().toString(), fullName, Platform.TELEGRAM);
             }
+
         } else if (update.hasEditedMessage()) {
             Message editedMessage = update.getEditedMessage();
             messageAggregatorService.editMessageFromUser(editedMessage.getChatId().toString(), editedMessage.getText(), editedMessage.getMessageId().toString(), Platform.TELEGRAM);
@@ -113,13 +122,35 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
         }
     }
 
-    private MessageAttachment savePhoto(PhotoSize photo) {
+    private MessageAttachment saveAttachment(PhotoSize photo) {
         GetFile getFile = new GetFile(photo.getFileId());
         try {
             File file = execute(getFile);
             return attachmentsSavingController.downloadAndSave(file.getFileUrl(getBotToken()), AttachmentType.PHOTO);
         } catch (TelegramApiException e) {
             log.warn("Не удалось получить ссылку на фото от Telegram API");
+        }
+        return null;
+    }
+
+    private MessageAttachment saveAttachment(Video video) {
+        GetFile getFile = new GetFile(video.getFileId());
+        try {
+            File file = execute(getFile);
+            return attachmentsSavingController.downloadAndSave(file.getFileUrl(getBotToken()), AttachmentType.VIDEO);
+        } catch (TelegramApiException e) {
+            log.warn("Не удалось получить ссылку на видео от Telegram API");
+        }
+        return null;
+    }
+
+    private MessageAttachment saveAttachment(VideoNote video) {
+        GetFile getFile = new GetFile(video.getFileId());
+        try {
+            File file = execute(getFile);
+            return attachmentsSavingController.downloadAndSave(file.getFileUrl(getBotToken()), AttachmentType.VIDEO);
+        } catch (TelegramApiException e) {
+            log.warn("Не удалось получить ссылку на видео от Telegram API");
         }
         return null;
     }
