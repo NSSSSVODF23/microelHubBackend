@@ -21,6 +21,10 @@ public class AttachmentsSavingController {
     }
 
     public MessageAttachment downloadAndSave(String uri, AttachmentType type) {
+        return  downloadAndSave(uri,type,null);
+    }
+
+    public MessageAttachment downloadAndSave(String uri, AttachmentType type, Integer duration) {
         switch (type) {
             case PHOTO:
                 try {
@@ -42,7 +46,20 @@ public class AttachmentsSavingController {
                         UUID fileName = UUID.randomUUID();
                         Files.createDirectories(Path.of("./attachments", "videos"));
                         Files.write(Path.of("./attachments", "videos", fileName + ".mp4"), video);
-                        return messageAttachmentDispatcher.create(fileName, AttachmentType.VIDEO);
+                        return messageAttachmentDispatcher.create(fileName, AttachmentType.VIDEO, duration);
+                    }
+                } catch (Exception e) {
+                    log.warn("Не удалось сохранить видео {}", e.getMessage());
+                }
+                return null;
+            case AUDIO:
+                try {
+                    byte[] audio = new RestTemplate().getForObject(uri, byte[].class);
+                    if (audio != null) {
+                        UUID fileName = UUID.randomUUID();
+                        Files.createDirectories(Path.of("./attachments", "audios"));
+                        Files.write(Path.of("./attachments", "audios", fileName + ".mp3"), audio);
+                        return messageAttachmentDispatcher.create(fileName, AttachmentType.AUDIO, duration);
                     }
                 } catch (Exception e) {
                     log.warn("Не удалось сохранить видео {}", e.getMessage());
@@ -57,6 +74,6 @@ public class AttachmentsSavingController {
 
     public MessageAttachment appendLink(String description, String data){
         UUID uuid = UUID.randomUUID();
-        return messageAttachmentDispatcher.create(uuid, AttachmentType.LINK, description, data);
+        return messageAttachmentDispatcher.create(uuid, AttachmentType.VIDEO_LINK, description, data);
     }
 }

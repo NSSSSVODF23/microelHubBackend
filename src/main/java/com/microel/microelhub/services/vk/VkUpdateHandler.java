@@ -10,6 +10,8 @@ import com.vk.api.sdk.client.actors.GroupActor;
 import com.vk.api.sdk.client.actors.UserActor;
 import com.vk.api.sdk.exceptions.ApiException;
 import com.vk.api.sdk.exceptions.ClientException;
+import com.vk.api.sdk.objects.audio.Audio;
+import com.vk.api.sdk.objects.messages.AudioMessage;
 import com.vk.api.sdk.objects.messages.Message;
 import com.vk.api.sdk.objects.photos.Photo;
 import com.vk.api.sdk.objects.photos.PhotoSizes;
@@ -62,6 +64,16 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
                         if (size != null)
                             attachment = saveAttachment(size);
                         break;
+                    case AUDIO:
+                        Audio audio = messageAttachment.getAudio();
+                        if(audio != null)
+                            attachment = saveAttachment(audio);
+                        break;
+                    case AUDIO_MESSAGE:
+                        AudioMessage audioMessage = messageAttachment.getAudioMessage();
+                        if(audioMessage != null)
+                            attachment = saveAttachment(audioMessage);
+                        break;
                 }
 
                 if (attachment != null) {
@@ -102,6 +114,14 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
 
     private MessageAttachment saveAttachment(PhotoSizes photo) {
         return attachmentsSavingController.downloadAndSave(photo.getUrl().toString(), AttachmentType.PHOTO);
+    }
+
+    private MessageAttachment saveAttachment(Audio audio) {
+        return attachmentsSavingController.downloadAndSave(audio.getUrl().toString(), AttachmentType.AUDIO, audio.getDuration());
+    }
+
+    private MessageAttachment saveAttachment(AudioMessage audio) {
+        return attachmentsSavingController.downloadAndSave(audio.getLinkMp3().toString(), AttachmentType.AUDIO, audio.getDuration());
     }
 
     private List<MessageAttachment> saveAttachment(Video... video) {

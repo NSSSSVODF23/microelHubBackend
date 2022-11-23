@@ -90,6 +90,16 @@ public class PublicResolvers {
         }
     }
 
+    @GetMapping("audio/{id}")
+    private ResponseEntity<byte[]> getAudio(@PathVariable String id) {
+        try {
+            byte[] video = Files.readAllBytes(Path.of("./attachments", "audios", id + ".mp3"));
+            return ResponseEntity.ok().contentType(MediaType.valueOf("audio/mp3")).contentLength(video.length).body(video);
+        } catch (IOException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @GetMapping("video/vk/{identifier}")
     public void redirectToVideo(HttpServletResponse httpServletResponse, @PathVariable String identifier) {
         httpServletResponse.setHeader("Location", vkService.getVideoLink(identifier));

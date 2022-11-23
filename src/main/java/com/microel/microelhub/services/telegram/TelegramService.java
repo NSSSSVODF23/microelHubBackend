@@ -77,6 +77,14 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
                 MessageAttachment messageAttachment = this.saveAttachment(message.getVideoNote());
                 if (messageAttachment != null)
                     messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
+            } else if (message.hasAudio()) {
+                MessageAttachment messageAttachment = this.saveAttachment(message.getAudio());
+                if (messageAttachment != null)
+                    messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
+            } else if (message.hasVoice()) {
+                MessageAttachment messageAttachment = this.saveAttachment(message.getVoice());
+                if (messageAttachment != null)
+                    messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
             } else if (message.hasPhoto()) {
                 MessageAttachment messageAttachment = this.saveAttachment(message.getPhoto().get(message.getPhoto().size() - 1));
                 if (messageAttachment != null)
@@ -137,7 +145,7 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
         GetFile getFile = new GetFile(video.getFileId());
         try {
             File file = execute(getFile);
-            return attachmentsSavingController.downloadAndSave(file.getFileUrl(getBotToken()), AttachmentType.VIDEO);
+            return attachmentsSavingController.downloadAndSave(file.getFileUrl(getBotToken()), AttachmentType.VIDEO, video.getDuration());
         } catch (TelegramApiException e) {
             log.warn("Не удалось получить ссылку на видео от Telegram API");
         }
@@ -148,9 +156,31 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
         GetFile getFile = new GetFile(video.getFileId());
         try {
             File file = execute(getFile);
-            return attachmentsSavingController.downloadAndSave(file.getFileUrl(getBotToken()), AttachmentType.VIDEO);
+            return attachmentsSavingController.downloadAndSave(file.getFileUrl(getBotToken()), AttachmentType.VIDEO, video.getDuration());
         } catch (TelegramApiException e) {
             log.warn("Не удалось получить ссылку на видео от Telegram API");
+        }
+        return null;
+    }
+
+    private MessageAttachment saveAttachment(Audio audio) {
+        GetFile getFile = new GetFile(audio.getFileId());
+        try {
+            File file = execute(getFile);
+            return attachmentsSavingController.downloadAndSave(file.getFileUrl(getBotToken()), AttachmentType.AUDIO, audio.getDuration());
+        } catch (TelegramApiException e) {
+            log.warn("Не удалось получить ссылку на аудио от Telegram API");
+        }
+        return null;
+    }
+
+    private MessageAttachment saveAttachment(Voice audio) {
+        GetFile getFile = new GetFile(audio.getFileId());
+        try {
+            File file = execute(getFile);
+            return attachmentsSavingController.downloadAndSave(file.getFileUrl(getBotToken()), AttachmentType.AUDIO, audio.getDuration());
+        } catch (TelegramApiException e) {
+            log.warn("Не удалось получить ссылку на аудио от Telegram API");
         }
         return null;
     }

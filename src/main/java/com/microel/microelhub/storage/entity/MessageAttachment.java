@@ -21,5 +21,6 @@ public class MessageAttachment {
     private AttachmentType attachmentType;
     private String description;
     private String data;
+    private Integer duration;
     private Timestamp created;
 }
