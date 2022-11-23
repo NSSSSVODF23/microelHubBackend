@@ -51,9 +51,17 @@ public class VkService implements MessageSenderWrapper {
             return;
         }
 
-        userActor = new UserActor(Integer.parseInt(configuration.getVkUserId()), configuration.getVkUserToken());
+        try{
+            userActor = new UserActor(Integer.parseInt(configuration.getVkUserId()), configuration.getVkUserToken());
+        }catch (Exception e){
+            log.warn("Не удалось инициализировать VK UserActor");
+        }
 //        userActor = new UserActor(33474398, "vk1.a.EhsqH9D9K1hrD-WZFEEJ4Vj0xiiu9iH0ng1TWVIpPn73WB5lnep0fWqX6x7SIJkI2sSozl9urutsglN2lMwG4YvNxsHpAKGJmyafaBlTo5q9NHwFbwdQLgSokEgrMu5E7z1tCo9m_9G9jeqNNQP3IJVsK-LhsLaVMzkf0-WpcpgbxK5dhLclbE0AoOOgaU--HolTy2Y0Lnlr-wQZseIFug");
-        groupActor = new GroupActor(Integer.parseInt(configuration.getVkGroupId()), configuration.getVkGroupToken());
+        try {
+            groupActor = new GroupActor(Integer.parseInt(configuration.getVkGroupId()), configuration.getVkGroupToken());
+        }catch (Exception e){
+            log.warn("Не удалось инициализировать VK GroupActor");
+        }
 
         try {
             api.groups().getTokenPermissions(groupActor).execute();
