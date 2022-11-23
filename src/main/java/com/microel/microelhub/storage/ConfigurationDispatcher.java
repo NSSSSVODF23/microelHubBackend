@@ -42,6 +42,8 @@ public class ConfigurationDispatcher {
                 .tlgBotToken(configBody.getTlgBotToken())
                 .tlgBotUsername(configBody.getTlgBotUsername())
                 .tlgNotificationChatId(configBody.getTlgNotificationChatId())
+                .vkUserId(configBody.getVkUserId())
+                .vkUserToken(configBody.getVkUserToken())
                 .vkGroupToken(configBody.getVkGroupToken())
                 .vkGroupId(configBody.getVkGroupId())
                 .build();

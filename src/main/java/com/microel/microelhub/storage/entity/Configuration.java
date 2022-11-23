@@ -26,6 +26,8 @@ public class Configuration {
     private Time startWorkingDay;
     private Time endWorkingDay;
     private Integer chatTimeout;
+    private String vkUserId;
+    private String vkUserToken;
     private String vkGroupId;
     private String vkGroupToken;
     private String tlgBotUsername;

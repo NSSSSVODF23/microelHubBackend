@@ -51,8 +51,9 @@ public class VkService implements MessageSenderWrapper {
             return;
         }
 
+        userActor = new UserActor(Integer.parseInt(configuration.getVkUserId()), configuration.getVkUserToken());
+//        userActor = new UserActor(33474398, "vk1.a.EhsqH9D9K1hrD-WZFEEJ4Vj0xiiu9iH0ng1TWVIpPn73WB5lnep0fWqX6x7SIJkI2sSozl9urutsglN2lMwG4YvNxsHpAKGJmyafaBlTo5q9NHwFbwdQLgSokEgrMu5E7z1tCo9m_9G9jeqNNQP3IJVsK-LhsLaVMzkf0-WpcpgbxK5dhLclbE0AoOOgaU--HolTy2Y0Lnlr-wQZseIFug");
         groupActor = new GroupActor(Integer.parseInt(configuration.getVkGroupId()), configuration.getVkGroupToken());
-        userActor = new UserActor(33474398, "vk1.a.EhsqH9D9K1hrD-WZFEEJ4Vj0xiiu9iH0ng1TWVIpPn73WB5lnep0fWqX6x7SIJkI2sSozl9urutsglN2lMwG4YvNxsHpAKGJmyafaBlTo5q9NHwFbwdQLgSokEgrMu5E7z1tCo9m_9G9jeqNNQP3IJVsK-LhsLaVMzkf0-WpcpgbxK5dhLclbE0AoOOgaU--HolTy2Y0Lnlr-wQZseIFug");
 
         try {
             api.groups().getTokenPermissions(groupActor).execute();
