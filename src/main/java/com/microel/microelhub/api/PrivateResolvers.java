@@ -5,7 +5,6 @@ import com.microel.microelhub.common.UpdateType;
 import com.microel.microelhub.common.chat.Platform;
 import com.microel.microelhub.services.MessageAggregatorService;
 import com.microel.microelhub.services.internal.InternalService;
-import com.microel.microelhub.services.vk.VkService;
 import com.microel.microelhub.storage.*;
 import com.microel.microelhub.storage.entity.Call;
 import com.microel.microelhub.storage.entity.Chat;
@@ -18,7 +17,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,8 +38,9 @@ public class PrivateResolvers {
     private final CallWS callWS;
     private final ChatWS chatWS;
     private final InternalService internalService;
+    private final FastMessageDispatcher fastMessageDispatcher;
 
-    public PrivateResolvers(MessageAggregatorService messageAggregatorService, MessageDispatcher messageDispatcher, ChatDispatcher chatDispatcher, ConfigurationDispatcher configurationDispatcher, OperatorDispatcher operatorDispatcher, UserDispatcher userDispatcher, CallDispatcher callDispatcher, OperatorWS operatorWS, CallWS callWS, ChatWS chatWS, InternalService internalService) {
+    public PrivateResolvers(MessageAggregatorService messageAggregatorService, MessageDispatcher messageDispatcher, ChatDispatcher chatDispatcher, ConfigurationDispatcher configurationDispatcher, OperatorDispatcher operatorDispatcher, UserDispatcher userDispatcher, CallDispatcher callDispatcher, OperatorWS operatorWS, CallWS callWS, ChatWS chatWS, InternalService internalService, FastMessageDispatcher fastMessageDispatcher) {
         this.messageAggregatorService = messageAggregatorService;
         this.messageDispatcher = messageDispatcher;
         this.chatDispatcher = chatDispatcher;
@@ -53,6 +52,7 @@ public class PrivateResolvers {
         this.callWS = callWS;
         this.chatWS = chatWS;
         this.internalService = internalService;
+        this.fastMessageDispatcher = fastMessageDispatcher;
     }
 
     @PostMapping("send-message")
@@ -249,7 +249,6 @@ public class PrivateResolvers {
     }
 
 
-
     @PostMapping("operator")
     private ResponseEntity<HttpResponse> addOperator(@RequestBody Operator operator) {
         try {
@@ -365,5 +364,42 @@ public class PrivateResolvers {
     @GetMapping("chats/statistic/ungrouped")
     private ResponseEntity<HttpResponse> getChatStatisticUngrouped(@RequestParam @Nullable Platform platform, @RequestParam @Nullable String login, @RequestParam @Nullable String start, @RequestParam @Nullable String end) {
         return ResponseEntity.ok(HttpResponse.of(chatDispatcher.getStatisticUngrouped(platform, login, start, end)));
+    }
+
+    @GetMapping("fast-messages/{login}")
+    private ResponseEntity<HttpResponse> getFastMessages(@PathVariable String login) {
+        try {
+            return ResponseEntity.ok(HttpResponse.of(fastMessageDispatcher.get(login)));
+        } catch (Exception e) {
+            return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("fast-message/{login}")
+    private ResponseEntity<HttpResponse> addNewFastMessage(@PathVariable String login, @RequestBody String message) {
+        try {
+            return ResponseEntity.ok(HttpResponse.of(fastMessageDispatcher.add(login, message)));
+        } catch (Exception e) {
+            return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
+        }
+    }
+
+    @PatchMapping("fast-message/{id}")
+    private ResponseEntity<HttpResponse> addNewFastMessage(@PathVariable Long id, @RequestBody String message) {
+        try {
+            return ResponseEntity.ok(HttpResponse.of(fastMessageDispatcher.edit(id, message)));
+        } catch (Exception e) {
+            return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("fast-message/{id}")
+    private ResponseEntity<HttpResponse> addNewFastMessage(@PathVariable Long id) {
+        try {
+            fastMessageDispatcher.remove(id);
+            return ResponseEntity.ok(HttpResponse.of(null));
+        } catch (Exception e) {
+            return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
+        }
     }
 }
