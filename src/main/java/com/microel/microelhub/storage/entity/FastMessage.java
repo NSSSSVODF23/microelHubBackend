@@ -19,6 +19,7 @@ public class FastMessage {
     @ManyToOne
     @JoinColumn(name = "operator_login")
     private Operator operator;
+    @Column(length = 4096)
     private String message;
     private Timestamp created;
 }
