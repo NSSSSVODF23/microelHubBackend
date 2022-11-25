@@ -26,6 +26,8 @@ import java.sql.Time;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -81,9 +83,9 @@ public class MessageAggregatorService {
         try {
             if (config != null) {
                 if (config.getStartWorkingDay().before(Time.valueOf(LocalTime.now())) && config.getEndWorkingDay().after(Time.valueOf(LocalTime.now()))) {
-                    sendMessage(chat.getChatId().toString(), config.getGreeting(), platform, true);
+                    sendMessage(chat.getChatId().toString(), config.getGreeting(), platform, true, new ArrayList<>());
                 } else {
-                    sendMessage(chat.getChatId().toString(), config.getWarning(), platform, true);
+                    sendMessage(chat.getChatId().toString(), config.getWarning(), platform, true, new ArrayList<>());
                 }
             }
         } catch (Exception e) {
@@ -118,7 +120,7 @@ public class MessageAggregatorService {
         }
     }
 
-    private void nextOperatorMessage(NewMessageHandle handle, String chatId, String text, Platform platform, Boolean isGreetingMsg) throws Exception {
+    private void nextOperatorMessage(NewMessageHandle handle, String chatId, String text, Platform platform, Boolean isGreetingMsg, List<String> imageAttachments) throws Exception {
         Chat chat = chatDispatcher.getLastByChatId(chatId, platform);
         if (chat != null && chat.getActive()) {
             String chatMsgId = handle.apply(chat.getUser().getUserId(), text);
@@ -148,19 +150,19 @@ public class MessageAggregatorService {
         }
     }
 
-    public void sendMessage(String chatId, String text, Platform platform, Boolean isGreetingMsg) throws Exception {
+    public void sendMessage(String chatId, String text, Platform platform, Boolean isGreetingMsg, List<String> imageAttachments) throws Exception {
         switch (platform) {
             case WHATSAPP:
                 log.warn("Отправка сообщений в WhatsApp не реализована");
                 break;
             case VK:
-                nextOperatorMessage(vkService::sendMessage, chatId, text, platform, isGreetingMsg);
+                nextOperatorMessage(vkService::sendMessage, chatId, text, platform, isGreetingMsg, imageAttachments);
                 break;
             case TELEGRAM:
-                nextOperatorMessage(telegramService::sendMessage, chatId, text, platform, isGreetingMsg);
+                nextOperatorMessage(telegramService::sendMessage, chatId, text, platform, isGreetingMsg, imageAttachments);
                 break;
             case INTERNAL:
-                nextOperatorMessage(internalService::sendMessage, chatId, text, platform, isGreetingMsg);
+                nextOperatorMessage(internalService::sendMessage, chatId, text, platform, isGreetingMsg, imageAttachments);
                 break;
             default:
                 throw new Exception("Платформа не найдена");

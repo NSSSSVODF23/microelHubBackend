@@ -58,7 +58,7 @@ public class PrivateResolvers {
     @PostMapping("send-message")
     private ResponseEntity<HttpResponse> sendMessage(@RequestBody SendMessageBody body) {
         try {
-            messageAggregatorService.sendMessage(body.getChatId(), body.getText(), body.getPlatform(), false);
+            messageAggregatorService.sendMessage(body.getChatId(), body.getText(), body.getPlatform(), false, body.getImageAttachments());
         } catch (Exception e) {
             return ResponseEntity.ok(HttpResponse.error(e.getMessage()));
         }

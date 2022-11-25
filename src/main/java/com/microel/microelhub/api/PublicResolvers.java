@@ -4,6 +4,7 @@ import com.microel.microelhub.api.transport.*;
 import com.microel.microelhub.common.UpdateType;
 import com.microel.microelhub.common.chat.Platform;
 import com.microel.microelhub.security.AuthenticationManager;
+import com.microel.microelhub.services.LongPollService;
 import com.microel.microelhub.services.internal.InternalService;
 import com.microel.microelhub.services.internal.Message;
 import com.microel.microelhub.services.telegram.TelegramService;
@@ -16,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.DeferredResult;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -25,6 +27,10 @@ import java.sql.Time;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import static java.lang.Thread.sleep;
 
 @Controller
 @RequestMapping("api/public")
@@ -39,8 +45,10 @@ public class PublicResolvers {
     private final CallWS callWS;
     private final ConfigurationDispatcher configurationDispatcher;
     private final TelegramService telegramService;
+    private final LongPollService longPollService;
+    private final ExecutorService longpolls = Executors.newFixedThreadPool(10);
 
-    public PublicResolvers(VkService vkService, AuthenticationManager authenticationManager, InternalService internalService, ChatDispatcher chatDispatcher, CallDispatcher callDispatcher, MessageDispatcher messageDispatcher, CallWS callWS, ConfigurationDispatcher configurationDispatcher, TelegramService telegramService) {
+    public PublicResolvers(VkService vkService, AuthenticationManager authenticationManager, InternalService internalService, ChatDispatcher chatDispatcher, CallDispatcher callDispatcher, MessageDispatcher messageDispatcher, CallWS callWS, ConfigurationDispatcher configurationDispatcher, TelegramService telegramService, LongPollService longPollService) {
         this.vkService = vkService;
         this.authenticationManager = authenticationManager;
         this.internalService = internalService;
@@ -50,6 +58,7 @@ public class PublicResolvers {
         this.callWS = callWS;
         this.configurationDispatcher = configurationDispatcher;
         this.telegramService = telegramService;
+        this.longPollService = longPollService;
     }
 
     @PostMapping("login")
@@ -165,6 +174,18 @@ public class PublicResolvers {
                         "https://telegram.me/" + config.getTlgBotUsername()
                 )
         ));
+    }
+
+    @GetMapping("chat/longpoll/{id}")
+    @ResponseBody
+    private DeferredResult<HttpResponse> getLongPollMessage(@PathVariable String id){
+        DeferredResult<HttpResponse> output = new DeferredResult<>(30000L, HttpResponse.of(null));
+        longpolls.execute(() -> {
+            try {
+                longPollService.subscribe(id, (result)->output.setResult(HttpResponse.of(result)));
+            } catch (Exception ignored) {}
+        });
+        return output;
     }
 
     @PostMapping("call")

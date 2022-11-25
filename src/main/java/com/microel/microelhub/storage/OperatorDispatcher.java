@@ -26,7 +26,7 @@ public class OperatorDispatcher {
     public Operator deleteOperator(String login) throws Exception {
         Operator operator = operatorRepository.findById(login).orElse(null);
         if(operator == null) throw new Exception("Оператор не найден");
-        operatorRepository.delete(operator);
+        operatorRepository.deleteById(login);
         return operator;
     }
 
