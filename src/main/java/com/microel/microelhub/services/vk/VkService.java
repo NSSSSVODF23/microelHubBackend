@@ -1,12 +1,14 @@
 package com.microel.microelhub.services.vk;
 
-import com.microel.microelhub.common.AttachmentsSavingController;
+import com.microel.microelhub.common.AttachmentsController;
+import com.microel.microelhub.common.chat.AttachmentType;
 import com.microel.microelhub.common.chat.Platform;
 import com.microel.microelhub.services.MessageAggregatorService;
 import com.microel.microelhub.services.MessageSenderWrapper;
 import com.microel.microelhub.services.StatedApiService;
 import com.microel.microelhub.storage.ConfigurationDispatcher;
 import com.microel.microelhub.storage.entity.Configuration;
+import com.microel.microelhub.storage.entity.MessageAttachment;
 import com.vk.api.sdk.client.TransportClient;
 import com.vk.api.sdk.client.VkApiClient;
 import com.vk.api.sdk.client.actors.GroupActor;
@@ -14,14 +16,24 @@ import com.vk.api.sdk.client.actors.UserActor;
 import com.vk.api.sdk.exceptions.ApiException;
 import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.httpclient.HttpTransportClient;
+import com.vk.api.sdk.objects.photos.responses.GetMessagesUploadServerResponse;
+import com.vk.api.sdk.objects.photos.responses.MessageUploadResponse;
+import com.vk.api.sdk.objects.photos.responses.SaveMessagesPhotoResponse;
 import com.vk.api.sdk.objects.video.VideoFull;
 import com.vk.api.sdk.objects.video.responses.GetResponse;
+import com.vk.api.sdk.queries.messages.MessagesSendQuery;
+import com.vk.api.sdk.queries.photos.PhotosSaveMessagesPhotoQuery;
+import com.vk.api.sdk.queries.upload.UploadPhotoMessageQuery;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -32,18 +44,20 @@ public class VkService implements MessageSenderWrapper {
     private VkUpdateHandler pollHandler;
     private final ConfigurationDispatcher configurationDispatcher;
     private final StatedApiService statedApiService;
+    private final AttachmentsController attachmentsController;
 
-    public VkService(@Lazy MessageAggregatorService messageAggregatorService, ConfigurationDispatcher configurationDispatcher, StatedApiService statedApiService, AttachmentsSavingController attachmentsSavingController) {
+    public VkService(@Lazy MessageAggregatorService messageAggregatorService, ConfigurationDispatcher configurationDispatcher, StatedApiService statedApiService, AttachmentsController attachmentsController) {
         this.configurationDispatcher = configurationDispatcher;
         this.statedApiService = statedApiService;
+        this.attachmentsController = attachmentsController;
         statedApiService.logCreated(Platform.VK);
         TransportClient transportClient = new HttpTransportClient();
         api = new VkApiClient(transportClient);
-        configurationDispatcher.addChangeConfigurationHandler("vk", () -> initialization(messageAggregatorService, attachmentsSavingController));
-        initialization(messageAggregatorService, attachmentsSavingController);
+        configurationDispatcher.addChangeConfigurationHandler("vk", () -> initialization(messageAggregatorService, attachmentsController));
+        initialization(messageAggregatorService, attachmentsController);
     }
 
-    private void initialization(MessageAggregatorService messageAggregatorService, AttachmentsSavingController attachmentsSavingController) {
+    private void initialization(MessageAggregatorService messageAggregatorService, AttachmentsController attachmentsController) {
         Configuration configuration = configurationDispatcher.getLastConfig();
         if (pollHandler != null && pollHandler.isRunning()) pollHandler.stop();
         if (configuration == null || configuration.getVkGroupId() == null || configuration.getVkGroupToken() == null) {
@@ -51,14 +65,14 @@ public class VkService implements MessageSenderWrapper {
             return;
         }
 
-        try{
+        try {
             userActor = new UserActor(Integer.parseInt(configuration.getVkUserId()), configuration.getVkUserToken());
-        }catch (Exception e){
+        } catch (Exception e) {
             log.warn("Не удалось инициализировать VK UserActor");
         }
         try {
             groupActor = new GroupActor(Integer.parseInt(configuration.getVkGroupId()), configuration.getVkGroupToken());
-        }catch (Exception e){
+        } catch (Exception e) {
             log.warn("Не удалось инициализировать VK GroupActor");
         }
 
@@ -78,7 +92,7 @@ public class VkService implements MessageSenderWrapper {
             return;
         }
 
-        pollHandler = new VkUpdateHandler(api, groupActor, userActor, 35, messageAggregatorService, attachmentsSavingController);
+        pollHandler = new VkUpdateHandler(api, groupActor, userActor, 35, messageAggregatorService, attachmentsController);
         pollHandler.run();
 
         statedApiService.logStatusChange(Platform.VK, "API инициализирован успешно");
@@ -89,11 +103,28 @@ public class VkService implements MessageSenderWrapper {
     }
 
     @Override
-    public String sendMessage(String userId, String text) {
+    public String sendMessage(String userId, String text, List<MessageAttachment> imageAttachments) {
         try {
-            return api.messages().send(groupActor).randomId(getRandomId()).disableMentions(false).peerId(Integer.parseInt(userId)).message(text).execute().toString();
-        } catch (ApiException | ClientException | NumberFormatException e) {
-            log.warn("Не удалось отправить сообщение.");
+            List<String> attachmentsIds = new ArrayList<>();
+            if (imageAttachments.size() > 0) {
+                for (MessageAttachment imageAttach : imageAttachments) {
+                    if(imageAttach.getAttachmentType() != AttachmentType.PHOTO) continue;
+                    GetMessagesUploadServerResponse uploadServerResponse = api.photos().getMessagesUploadServer(groupActor).execute();
+                    MessageUploadResponse messageUploadResponse = api.upload()
+                            .photoMessage(uploadServerResponse.getUploadUrl().toString(), attachmentsController.getFile(imageAttach.getAttachmentId().toString(), AttachmentType.PHOTO))
+                            .execute();
+                    List<SaveMessagesPhotoResponse> messagesPhotoResponses = api.photos().saveMessagesPhoto(groupActor, messageUploadResponse.getPhoto())
+                            .server(messageUploadResponse.getServer()).hash(messageUploadResponse.getHash()).execute();
+                    SaveMessagesPhotoResponse savedToVkPhoto = messagesPhotoResponses.get(0);
+                    if(savedToVkPhoto == null) throw new Exception("Получен пустой ответ на запрос сохранения изображения.");
+                    attachmentsIds.add("photo"+savedToVkPhoto.getOwnerId()+"_"+savedToVkPhoto.getId()+"_"+savedToVkPhoto.getAccessKey());
+                }
+            }
+            MessagesSendQuery messagesSendQuery = api.messages().send(groupActor).randomId(getRandomId()).disableMentions(false).peerId(Integer.parseInt(userId)).message(text);
+            if(attachmentsIds.size()>0) messagesSendQuery.attachment(String.join(",", attachmentsIds));
+            return messagesSendQuery.execute().toString();
+        } catch (Exception e) {
+            log.warn("Не удалось отправить сообщение. {}", e.getMessage());
         }
         return null;
     }
@@ -105,7 +136,7 @@ public class VkService implements MessageSenderWrapper {
         } catch (ApiException | ClientException | NumberFormatException e) {
             throw new Exception("Не удалось отредактировать сообщение: " + e.getMessage());
         }
-    }
+    }//fixme Удаляет фото при редактировании
 
     @Override
     public void deleteMessage(String userId, String chatMsgId) throws Exception {

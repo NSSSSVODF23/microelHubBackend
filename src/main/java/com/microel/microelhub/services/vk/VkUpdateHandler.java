@@ -1,6 +1,6 @@
 package com.microel.microelhub.services.vk;
 
-import com.microel.microelhub.common.AttachmentsSavingController;
+import com.microel.microelhub.common.AttachmentsController;
 import com.microel.microelhub.common.chat.AttachmentType;
 import com.microel.microelhub.common.chat.Platform;
 import com.microel.microelhub.services.MessageAggregatorService;
@@ -8,8 +8,6 @@ import com.microel.microelhub.storage.entity.MessageAttachment;
 import com.vk.api.sdk.client.VkApiClient;
 import com.vk.api.sdk.client.actors.GroupActor;
 import com.vk.api.sdk.client.actors.UserActor;
-import com.vk.api.sdk.exceptions.ApiException;
-import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.objects.audio.Audio;
 import com.vk.api.sdk.objects.messages.AudioMessage;
 import com.vk.api.sdk.objects.messages.Message;
@@ -19,8 +17,6 @@ import com.vk.api.sdk.objects.users.responses.GetResponse;
 import com.vk.api.sdk.objects.video.Video;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,15 +27,15 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
     private final GroupActor actor;
     private final UserActor userActor;
     private final MessageAggregatorService messageAggregatorService;
-    private final AttachmentsSavingController attachmentsSavingController;
+    private final AttachmentsController attachmentsController;
 
-    public VkUpdateHandler(VkApiClient client, GroupActor actor, UserActor userActor, int waitTime, MessageAggregatorService messageAggregatorService, AttachmentsSavingController attachmentsSavingController) {
+    public VkUpdateHandler(VkApiClient client, GroupActor actor, UserActor userActor, int waitTime, MessageAggregatorService messageAggregatorService, AttachmentsController attachmentsController) {
         super(client, actor, waitTime);
         this.api = client;
         this.actor = actor;
         this.userActor = userActor;
         this.messageAggregatorService = messageAggregatorService;
-        this.attachmentsSavingController = attachmentsSavingController;
+        this.attachmentsController = attachmentsController;
     }
 
 //    @Override
@@ -113,15 +109,15 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
     }
 
     private MessageAttachment saveAttachment(PhotoSizes photo) {
-        return attachmentsSavingController.downloadAndSave(photo.getUrl().toString(), AttachmentType.PHOTO);
+        return attachmentsController.downloadAndSave(photo.getUrl().toString(), AttachmentType.PHOTO);
     }
 
     private MessageAttachment saveAttachment(Audio audio) {
-        return attachmentsSavingController.downloadAndSave(audio.getUrl().toString(), AttachmentType.AUDIO, audio.getDuration());
+        return attachmentsController.downloadAndSave(audio.getUrl().toString(), AttachmentType.AUDIO, audio.getDuration());
     }
 
     private MessageAttachment saveAttachment(AudioMessage audio) {
-        return attachmentsSavingController.downloadAndSave(audio.getLinkMp3().toString(), AttachmentType.AUDIO, audio.getDuration());
+        return attachmentsController.downloadAndSave(audio.getLinkMp3().toString(), AttachmentType.AUDIO, audio.getDuration());
     }
 
     private List<MessageAttachment> saveAttachment(Video... video) {
@@ -132,7 +128,7 @@ public class VkUpdateHandler extends com.vk.api.sdk.events.longpoll.GroupLongPol
             videoToken.append(v.getOwnerId().toString());
             videoToken.append("_").append(v.getId());
             if (v.getAccessKey() != null) videoToken.append("_").append(v.getAccessKey());
-            attachments.add(attachmentsSavingController.appendLink("Видео " + v.getTitle(), videoToken.toString()));
+            attachments.add(attachmentsController.appendLink("Видео " + v.getTitle(), videoToken.toString()));
         }
 
         return attachments;

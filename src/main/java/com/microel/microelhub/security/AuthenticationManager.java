@@ -49,7 +49,7 @@ public class AuthenticationManager {
         return JWT.create().withSubject(operator.getLogin())
                 .withClaim("role", operator.getRole().name())
                 .withClaim("name", operator.getName())
-                .withExpiresAt(Instant.now().plus(10, ChronoUnit.MINUTES))
+                .withExpiresAt(Instant.now().plus(12, ChronoUnit.HOURS))
                 .sign(Algorithm.HMAC512(applicationProperties.getAuthUserTokenSecretKey()));
     }
 

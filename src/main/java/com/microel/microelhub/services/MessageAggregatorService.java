@@ -3,6 +3,7 @@ package com.microel.microelhub.services;
 import com.microel.microelhub.api.ChatMessageWS;
 import com.microel.microelhub.api.ChatWS;
 import com.microel.microelhub.api.transport.ListUpdateWrapper;
+import com.microel.microelhub.common.AttachmentsController;
 import com.microel.microelhub.common.UpdateType;
 import com.microel.microelhub.common.chat.DeleteMessageHandle;
 import com.microel.microelhub.common.chat.EditMessageHandle;
@@ -41,6 +42,7 @@ public class MessageAggregatorService {
     private final InternalService internalService;
     private final VkService vkService;
     private final TelegramService telegramService;
+    private final AttachmentsController attachmentsController;
 
     @Scheduled(initialDelay = 1, fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
     private void autoCloseChatsSchedule() {
@@ -66,8 +68,8 @@ public class MessageAggregatorService {
             ChatWS chatWS,
             InternalService internalService,
             VkService vkService,
-            TelegramService telegramService
-    ) {
+            TelegramService telegramService,
+            AttachmentsController attachmentsController) {
         this.chatDispatcher = chatDispatcher;
         this.messageDispatcher = messageDispatcher;
         this.configurationDispatcher = configurationDispatcher;
@@ -76,6 +78,7 @@ public class MessageAggregatorService {
         this.internalService = internalService;
         this.vkService = vkService;
         this.telegramService = telegramService;
+        this.attachmentsController = attachmentsController;
     }
 
     private void sendGreetingMessage(Chat chat, Platform platform) {
@@ -120,13 +123,13 @@ public class MessageAggregatorService {
         }
     }
 
-    private void nextOperatorMessage(NewMessageHandle handle, String chatId, String text, Platform platform, Boolean isGreetingMsg, List<String> imageAttachments) throws Exception {
+    private void nextOperatorMessage(NewMessageHandle handle, String chatId, String text, Platform platform, Boolean isGreetingMsg, List<MessageAttachment> imageAttachments) throws Exception {
         Chat chat = chatDispatcher.getLastByChatId(chatId, platform);
         if (chat != null && chat.getActive()) {
-            String chatMsgId = handle.apply(chat.getUser().getUserId(), text);
+            String chatMsgId = handle.apply(chat.getUser().getUserId(), text, imageAttachments);
             if (chatMsgId == null) throw new Exception("Не удалось отправить сообщение");
             chatDispatcher.updateDetailedInfo(chat, !isGreetingMsg);
-            chatMessageWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, messageDispatcher.add(text, chatMsgId, chat, true)));
+            chatMessageWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, messageDispatcher.add(text, chatMsgId, chat, true, imageAttachments.toArray(MessageAttachment[]::new))));
             return;
         }
         throw new Exception("Не найден активный чат");
@@ -151,18 +154,19 @@ public class MessageAggregatorService {
     }
 
     public void sendMessage(String chatId, String text, Platform platform, Boolean isGreetingMsg, List<String> imageAttachments) throws Exception {
+        List<MessageAttachment> messageAttachments = saveImageAttachments(imageAttachments);
         switch (platform) {
             case WHATSAPP:
                 log.warn("Отправка сообщений в WhatsApp не реализована");
                 break;
             case VK:
-                nextOperatorMessage(vkService::sendMessage, chatId, text, platform, isGreetingMsg, imageAttachments);
+                nextOperatorMessage(vkService::sendMessage, chatId, text, platform, isGreetingMsg, messageAttachments);
                 break;
             case TELEGRAM:
-                nextOperatorMessage(telegramService::sendMessage, chatId, text, platform, isGreetingMsg, imageAttachments);
+                nextOperatorMessage(telegramService::sendMessage, chatId, text, platform, isGreetingMsg, messageAttachments);
                 break;
             case INTERNAL:
-                nextOperatorMessage(internalService::sendMessage, chatId, text, platform, isGreetingMsg, imageAttachments);
+                nextOperatorMessage(internalService::sendMessage, chatId, text, platform, isGreetingMsg, messageAttachments);
                 break;
             default:
                 throw new Exception("Платформа не найдена");
@@ -207,4 +211,15 @@ public class MessageAggregatorService {
         }
     }
 
+    private List<MessageAttachment> saveImageAttachments(List<String> baseEncodedArray){
+        List<MessageAttachment> messageAttachments = new ArrayList<>();
+        for (String encoded: baseEncodedArray){
+            try {
+                messageAttachments.add(attachmentsController.decodeImageAndSave(encoded));
+            } catch (Exception e) {
+                log.warn("Не удалось сохранить сообщение отправленное оператором {}", e.getMessage());
+            }
+        }
+        return messageAttachments;
+    }
 }

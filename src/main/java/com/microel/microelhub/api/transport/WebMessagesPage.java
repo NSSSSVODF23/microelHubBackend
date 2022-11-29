@@ -19,7 +19,15 @@ public class WebMessagesPage {
     public static WebMessagesPage of(Page<com.microel.microelhub.storage.entity.Message> page){
         final WebMessagesPage webMessagesPage = new WebMessagesPage();
         webMessagesPage.totalElements = page.getTotalElements();
-        webMessagesPage.content = page.getContent().stream().map(m->new Message(m.getChatMsgId(), UUID.fromString(m.getChat().getUser().getUserId()), m.getText(), m.getOperatorMsg(), false)).collect(Collectors.toList());
+        webMessagesPage.content = page.getContent()
+                .stream()
+                .map(m->new Message(m.getChatMsgId(),
+                        UUID.fromString(m.getChat().getUser().getUserId()),
+                        m.getText(),
+                        m.getOperatorMsg(),
+                        false,
+                        m.getAttachments()))
+                .collect(Collectors.toList());
         return webMessagesPage;
     }
 }

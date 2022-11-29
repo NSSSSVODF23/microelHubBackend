@@ -7,7 +7,6 @@ C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\m
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\chat\AttachmentType.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\entity\MessageAttachment.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\services\telegram\TelegramBotProvider.java
-C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\WebChatWS.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\services\LongPollResolver.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\UserAppendPhoneRequest.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\chat\EditMessageHandle.java
@@ -69,10 +68,10 @@ C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\m
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\DeleteMessageBody.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\proxies\CGroupStatisticData.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\PrivateResolvers.java
-C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\AttachmentsSavingController.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\ChangeChatOperatorRequest.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\configuration\Security.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\ChangeConfigurationHandle.java
+C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\AttachmentsController.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\MessageDispatcher.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\configuration\WebSocket.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\services\LongPollIdentical.java
@@ -83,7 +82,6 @@ C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\m
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\entity\FastMessage.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\common\chat\Platform.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\transport\WebChatConfigResponse.java
-C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\api\WebOperatorWS.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\entity\Configuration.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\storage\UserDispatcher.java
 C:\Users\max95\Documents\Projects\microelHub\backend\src\main\java\com\microel\microelhub\services\MessageAggregatorService.java
