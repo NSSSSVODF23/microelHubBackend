@@ -1,6 +1,8 @@
 package com.microel.microelhub.storage.entity;
 
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
@@ -16,8 +18,9 @@ public class FastMessage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long fastMessageId;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "operator_login")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Operator operator;
     @Column(length = 4096)
     private String message;

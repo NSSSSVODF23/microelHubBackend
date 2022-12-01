@@ -3,6 +3,8 @@ package com.microel.microelhub.storage.entity;
 import com.microel.microelhub.common.chat.ChatState;
 import com.microel.microelhub.common.chat.Platform;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.stereotype.Indexed;
 
 import javax.persistence.*;
@@ -20,8 +22,9 @@ public class Chat {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID chatId;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "f_user_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
     private Boolean active;
     private Timestamp created;
@@ -31,8 +34,9 @@ public class Chat {
     private Long duration;
     private Integer messageCount;
     private Integer unreadCount;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "f_operator_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Operator operator;
 
     public void increaseMessagesCount(){

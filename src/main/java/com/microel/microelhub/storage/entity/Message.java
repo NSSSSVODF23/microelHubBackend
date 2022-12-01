@@ -1,6 +1,8 @@
 package com.microel.microelhub.storage.entity;
 
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
@@ -21,14 +23,16 @@ public class Message {
     private String chatMsgId;
     @Column(columnDefinition = "text default ''")
     private String text;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "f_operator_login")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Operator operator;
     private Timestamp timestamp;
     private Boolean operatorMsg;
     private Boolean edited;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "f_chat_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Chat chat;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable()

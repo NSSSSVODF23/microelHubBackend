@@ -1,6 +1,8 @@
 package com.microel.microelhub.storage.entity;
 
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.sql.Time;
@@ -18,8 +20,9 @@ public class Configuration {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long config_id;
     private Timestamp change;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "f_operator")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Operator edited;
     private String greeting;
     private String warning;
