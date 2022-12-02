@@ -8,6 +8,8 @@ import com.microel.microelhub.services.MessageSenderWrapper;
 import com.microel.microelhub.storage.ConfigurationDispatcher;
 import com.microel.microelhub.storage.entity.Configuration;
 import com.microel.microelhub.storage.entity.MessageAttachment;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -23,6 +25,7 @@ import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -62,6 +65,7 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
     public void onUpdateReceived(Update update) {
         if (update.hasMessage()) {
             Message message = update.getMessage();
+            Message replyMessage = message.getReplyToMessage();
 
             User user = message.getFrom();
             if (message.isCommand() && message.getText().equals("/start")) {
@@ -77,34 +81,57 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
                 fullName += " " + user.getLastName();
             }
 
-            if (message.hasVideo()) {
-                MessageAttachment messageAttachment = this.saveAttachment(message.getVideo());
-                if (messageAttachment != null)
-                    messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
-            } else if (message.hasVideoNote()) {
-                MessageAttachment messageAttachment = this.saveAttachment(message.getVideoNote());
-                if (messageAttachment != null)
-                    messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
-            } else if (message.hasAudio()) {
-                MessageAttachment messageAttachment = this.saveAttachment(message.getAudio());
-                if (messageAttachment != null)
-                    messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
-            } else if (message.hasVoice()) {
-                MessageAttachment messageAttachment = this.saveAttachment(message.getVoice());
-                if (messageAttachment != null)
-                    messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
-            } else if (message.hasPhoto()) {
-                MessageAttachment messageAttachment = this.saveAttachment(message.getPhoto().get(message.getPhoto().size() - 1));
-                if (messageAttachment != null)
-                    messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getCaption(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, messageAttachment);
-            } else {
-                messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), message.getText(), message.getMessageId().toString(), fullName, Platform.TELEGRAM);
+            ParsedMessage mainMessage = parseMessage(message);
+            if (replyMessage != null) {
+                mainMessage.unite(parseMessage(replyMessage));
             }
-
+            messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), mainMessage.text.toString(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, mainMessage.getAttachments().toArray(MessageAttachment[]::new));
         } else if (update.hasEditedMessage()) {
             Message editedMessage = update.getEditedMessage();
             messageAggregatorService.editMessageFromUser(editedMessage.getChatId().toString(), editedMessage.getText(), editedMessage.getMessageId().toString(), Platform.TELEGRAM);
         }
+    }
+
+    private ParsedMessage parseMessage(Message message) {
+        ParsedMessage parsedMessage = new ParsedMessage();
+        if (message.hasVideo()) {
+            MessageAttachment messageAttachment = this.saveAttachment(message.getVideo());
+            if (messageAttachment != null) {
+                parsedMessage.getText().append(message.getCaption());
+                parsedMessage.getAttachments().add(messageAttachment);
+                return parsedMessage;
+            }
+        } else if (message.hasVideoNote()) {
+            MessageAttachment messageAttachment = this.saveAttachment(message.getVideoNote());
+            if (messageAttachment != null) {
+                parsedMessage.getText().append(message.getCaption());
+                parsedMessage.getAttachments().add(messageAttachment);
+                return parsedMessage;
+            }
+        } else if (message.hasAudio()) {
+            MessageAttachment messageAttachment = this.saveAttachment(message.getAudio());
+            if (messageAttachment != null) {
+                parsedMessage.getText().append(message.getCaption());
+                parsedMessage.getAttachments().add(messageAttachment);
+                return parsedMessage;
+            }
+        } else if (message.hasVoice()) {
+            MessageAttachment messageAttachment = this.saveAttachment(message.getVoice());
+            if (messageAttachment != null) {
+                parsedMessage.getText().append(message.getCaption());
+                parsedMessage.getAttachments().add(messageAttachment);
+                return parsedMessage;
+            }
+        } else if (message.hasPhoto()) {
+            MessageAttachment messageAttachment = this.saveAttachment(message.getPhoto().get(message.getPhoto().size() - 1));
+            if (messageAttachment != null) {
+                parsedMessage.getText().append(message.getCaption());
+                parsedMessage.getAttachments().add(messageAttachment);
+                return parsedMessage;
+            }
+        }
+        parsedMessage.getText().append(message.getText());
+        return parsedMessage;
     }
 
     @Override
@@ -232,6 +259,18 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
             }
         } catch (Exception ignored) {
 
+        }
+    }
+
+    @Getter
+    @Setter
+    private static class ParsedMessage {
+        private StringBuilder text = new StringBuilder();
+        private List<MessageAttachment> attachments = new ArrayList<>();
+
+        public void unite(ParsedMessage message) {
+            text.append("\r\n").append(message.getText());
+            attachments.addAll(message.getAttachments());
         }
     }
 }
