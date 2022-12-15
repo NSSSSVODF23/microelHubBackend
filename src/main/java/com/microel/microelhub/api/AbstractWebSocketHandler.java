@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class AbstractWebSocketHandler<T> extends TextWebSocketHandler {
@@ -44,7 +45,10 @@ public abstract class AbstractWebSocketHandler<T> extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         String[] strings = Objects.requireNonNull(session.getUri()).getPath().split("/");
         String token = strings[strings.length - 1];
-        if (!isAuthorize(token)) session.close(CloseStatus.SERVER_ERROR);
+        if (!isAuthorize(token)) {
+            session.close(CloseStatus.SERVER_ERROR);
+            return;
+        }
         sessions.add(session);
         connectionTokenSessionMap.put(token,session);
         List<T> initialsObject = onNewConnection(token);
@@ -63,6 +67,12 @@ public abstract class AbstractWebSocketHandler<T> extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        List<String> tokensList = connectionTokenSessionMap
+                .entrySet().stream().filter(entry -> entry.getValue().equals(session))
+                .map(Map.Entry::getKey).collect(Collectors.toList());
+        if(tokensList.size()>0){
+            onCloseConnection(tokensList.get(0), tokensList.size()>1);
+        }
         sessions.remove(session);
         connectionTokenSessionMap.remove(session);
     }
@@ -101,6 +111,7 @@ public abstract class AbstractWebSocketHandler<T> extends TextWebSocketHandler {
     abstract public void onReceiveMessage(T object);
 
     abstract public List<T> onNewConnection(String connectionToken);
+    abstract public void onCloseConnection(String connectionToken, Boolean isMultiple);
 
     abstract public boolean isAuthorize(String token);
 }

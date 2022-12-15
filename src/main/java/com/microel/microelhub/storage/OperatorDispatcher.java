@@ -1,9 +1,13 @@
 package com.microel.microelhub.storage;
 
+import com.microel.microelhub.api.OperatorWS;
+import com.microel.microelhub.api.transport.ListUpdateWrapper;
 import com.microel.microelhub.api.transport.PageRequest;
 import com.microel.microelhub.common.OperatorGroup;
+import com.microel.microelhub.common.UpdateType;
 import com.microel.microelhub.storage.entity.Operator;
 import com.microel.microelhub.storage.repository.OperatorRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
@@ -14,9 +18,11 @@ import java.time.Instant;
 @Component
 public class OperatorDispatcher {
     private final OperatorRepository operatorRepository;
+    private final OperatorWS operatorWS;
 
-    public OperatorDispatcher(OperatorRepository operatorRepository) {
+    public OperatorDispatcher(OperatorRepository operatorRepository, @Lazy OperatorWS operatorWS) {
         this.operatorRepository = operatorRepository;
+        this.operatorWS = operatorWS;
     }
 
     public Operator getByLogin(String login) {
@@ -69,5 +75,12 @@ public class OperatorDispatcher {
     public void updateLastLoginTime(Operator operator) {
         operator.setLastLogin(Timestamp.from(Instant.now()));
         operatorRepository.save(operator);
+    }
+
+    public void setStatus(String login, Boolean isOnline) {
+        Operator operator = getByLogin(login);
+        if(operator == null) return;
+        operator.setIsOnline(isOnline);
+        operatorWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.UPDATE, operatorRepository.save(operator)));
     }
 }

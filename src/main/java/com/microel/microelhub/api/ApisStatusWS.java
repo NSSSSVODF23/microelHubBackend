@@ -30,6 +30,11 @@ public class ApisStatusWS extends AbstractWebSocketHandler<ApiStatus> {
     }
 
     @Override
+    public void onCloseConnection(String connectionToken, Boolean isMultiple) {
+
+    }
+
+    @Override
     public boolean isAuthorize(String token) {
         try {
             return authenticationManager.validateUserToken(token) != null;

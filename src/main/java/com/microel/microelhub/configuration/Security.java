@@ -33,7 +33,6 @@ public class Security {
                 ).permitAll()
                 .antMatchers(
                         "/api/private/operator",
-                        "/api/private/operators",
                         "/api/private/config"
                 ).hasRole(OperatorGroup.ADMIN.toString())
                 .anyRequest().authenticated()

@@ -27,6 +27,11 @@ public class OperatorWS extends AbstractWebSocketHandler<ListUpdateWrapper<Opera
     }
 
     @Override
+    public void onCloseConnection(String connectionToken, Boolean isMultiple) {
+
+    }
+
+    @Override
     public boolean isAuthorize(String token) {
         try {
             return authenticationManager.validateUserToken(token) != null;
