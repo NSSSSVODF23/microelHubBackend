@@ -20,9 +20,9 @@ public class Configuration {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long config_id;
     private Timestamp change;
-    @ManyToOne(cascade = CascadeType.REMOVE)
+    @ManyToOne()
     @JoinColumn(name = "f_operator")
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @OnDelete(action = OnDeleteAction.NO_ACTION)
     private Operator edited;
     private String greeting;
     private String warning;

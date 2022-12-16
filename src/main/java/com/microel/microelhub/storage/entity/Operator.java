@@ -25,4 +25,6 @@ public class Operator {
     private Integer rating;
     private Boolean isOnline;
     private String avatar;
+    @Column(columnDefinition = "boolean default false")
+    private Boolean deleted;
 }

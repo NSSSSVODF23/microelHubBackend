@@ -20,8 +20,8 @@ public class Call {
     private Long callId;
     private String phone;
     private Timestamp created;
-    @ManyToOne(cascade = CascadeType.REMOVE)
+    @ManyToOne()
     @JoinColumn(name = "f_operator_login")
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @OnDelete(action = OnDeleteAction.NO_ACTION)
     private Operator processed;
 }

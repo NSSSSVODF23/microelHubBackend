@@ -18,9 +18,9 @@ public class FastMessage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long fastMessageId;
-    @ManyToOne(cascade = CascadeType.REMOVE)
+    @ManyToOne()
     @JoinColumn(name = "operator_login")
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @OnDelete(action = OnDeleteAction.NO_ACTION)
     private Operator operator;
     @Column(length = 4096)
     private String message;

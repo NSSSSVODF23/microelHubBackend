@@ -22,9 +22,9 @@ public class Chat {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID chatId;
-    @ManyToOne(cascade = CascadeType.REMOVE)
+    @ManyToOne()
     @JoinColumn(name = "f_user_id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @OnDelete(action = OnDeleteAction.NO_ACTION)
     private User user;
     private Boolean active;
     private Timestamp created;
@@ -34,9 +34,9 @@ public class Chat {
     private Long duration;
     private Integer messageCount;
     private Integer unreadCount;
-    @ManyToOne(cascade = CascadeType.REMOVE)
+    @ManyToOne()
     @JoinColumn(name = "f_operator_id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @OnDelete(action = OnDeleteAction.NO_ACTION)
     private Operator operator;
 
     public void increaseMessagesCount(){

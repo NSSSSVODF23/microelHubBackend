@@ -23,16 +23,16 @@ public class Message {
     private String chatMsgId;
     @Column(columnDefinition = "text default ''")
     private String text;
-    @ManyToOne(cascade = CascadeType.REMOVE)
+    @ManyToOne()
     @JoinColumn(name = "f_operator_login")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Operator operator;
     private Timestamp timestamp;
     private Boolean operatorMsg;
     private Boolean edited;
-    @ManyToOne(cascade = CascadeType.REMOVE)
+    @ManyToOne()
     @JoinColumn(name = "f_chat_id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @OnDelete(action = OnDeleteAction.NO_ACTION)
     private Chat chat;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable()
