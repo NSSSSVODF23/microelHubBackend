@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import javax.validation.constraints.Null;
 import java.io.File;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -92,6 +93,11 @@ public class VkService implements MessageSenderWrapper {
             return;
         }
 
+        try {
+
+        }catch (NullPointerException e) {
+
+        }
         pollHandler = new VkUpdateHandler(api, groupActor, userActor, 35, messageAggregatorService, attachmentsController);
         pollHandler.run();
 
