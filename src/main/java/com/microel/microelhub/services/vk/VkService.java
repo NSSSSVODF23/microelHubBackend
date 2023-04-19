@@ -22,30 +22,28 @@ import com.vk.api.sdk.objects.photos.responses.SaveMessagesPhotoResponse;
 import com.vk.api.sdk.objects.video.VideoFull;
 import com.vk.api.sdk.objects.video.responses.GetResponse;
 import com.vk.api.sdk.queries.messages.MessagesSendQuery;
-import com.vk.api.sdk.queries.photos.PhotosSaveMessagesPhotoQuery;
-import com.vk.api.sdk.queries.upload.UploadPhotoMessageQuery;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import javax.validation.constraints.Null;
-import java.io.File;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.concurrent.Executors;
+
+import static java.lang.Thread.sleep;
 
 @Slf4j
 @Service
 public class VkService implements MessageSenderWrapper {
     private final VkApiClient api;
-    private GroupActor groupActor;
-    private UserActor userActor;
-    private VkUpdateHandler pollHandler;
     private final ConfigurationDispatcher configurationDispatcher;
     private final StatedApiService statedApiService;
     private final AttachmentsController attachmentsController;
+    private GroupActor groupActor;
+    private UserActor userActor;
+    private VkUpdateHandler pollHandler;
 
     public VkService(@Lazy MessageAggregatorService messageAggregatorService, ConfigurationDispatcher configurationDispatcher, StatedApiService statedApiService, AttachmentsController attachmentsController) {
         this.configurationDispatcher = configurationDispatcher;
@@ -81,6 +79,16 @@ public class VkService implements MessageSenderWrapper {
             api.groups().getTokenPermissions(groupActor).execute();
         } catch (ApiException | ClientException e) {
             statedApiService.logStatusChange(Platform.VK, "API не удалось зарегистрировать, нет доступа к интернету или реквизиты не верны");
+            Executors.newSingleThreadExecutor().execute(
+                    () -> {
+                        try {
+                            sleep(60000);
+                            statedApiService.logStatusChange(Platform.VK, "Повторная инициализация API");
+                            initialization(messageAggregatorService, attachmentsController);
+                        } catch (Exception ignored) {
+                        }
+                    }
+            );
             return;
         }
 
@@ -95,7 +103,7 @@ public class VkService implements MessageSenderWrapper {
 
         try {
 
-        }catch (NullPointerException e) {
+        } catch (NullPointerException e) {
 
         }
         pollHandler = new VkUpdateHandler(api, groupActor, userActor, 35, messageAggregatorService, attachmentsController);
@@ -114,7 +122,7 @@ public class VkService implements MessageSenderWrapper {
             List<String> attachmentsIds = new ArrayList<>();
             if (imageAttachments.size() > 0) {
                 for (MessageAttachment imageAttach : imageAttachments) {
-                    if(imageAttach.getAttachmentType() != AttachmentType.PHOTO) continue;
+                    if (imageAttach.getAttachmentType() != AttachmentType.PHOTO) continue;
                     GetMessagesUploadServerResponse uploadServerResponse = api.photos().getMessagesUploadServer(groupActor).execute();
                     MessageUploadResponse messageUploadResponse = api.upload()
                             .photoMessage(uploadServerResponse.getUploadUrl().toString(), attachmentsController.getFile(imageAttach.getAttachmentId().toString(), AttachmentType.PHOTO))
@@ -122,12 +130,13 @@ public class VkService implements MessageSenderWrapper {
                     List<SaveMessagesPhotoResponse> messagesPhotoResponses = api.photos().saveMessagesPhoto(groupActor, messageUploadResponse.getPhoto())
                             .server(messageUploadResponse.getServer()).hash(messageUploadResponse.getHash()).execute();
                     SaveMessagesPhotoResponse savedToVkPhoto = messagesPhotoResponses.get(0);
-                    if(savedToVkPhoto == null) throw new Exception("Получен пустой ответ на запрос сохранения изображения.");
-                    attachmentsIds.add("photo"+savedToVkPhoto.getOwnerId()+"_"+savedToVkPhoto.getId()+"_"+savedToVkPhoto.getAccessKey());
+                    if (savedToVkPhoto == null)
+                        throw new Exception("Получен пустой ответ на запрос сохранения изображения.");
+                    attachmentsIds.add("photo" + savedToVkPhoto.getOwnerId() + "_" + savedToVkPhoto.getId() + "_" + savedToVkPhoto.getAccessKey());
                 }
             }
             MessagesSendQuery messagesSendQuery = api.messages().send(groupActor).randomId(getRandomId()).disableMentions(false).peerId(Integer.parseInt(userId)).message(text);
-            if(attachmentsIds.size()>0) messagesSendQuery.attachment(String.join(",", attachmentsIds));
+            if (attachmentsIds.size() > 0) messagesSendQuery.attachment(String.join(",", attachmentsIds));
             return messagesSendQuery.execute().toString();
         } catch (Exception e) {
             log.warn("Не удалось отправить сообщение. {}", e.getMessage());

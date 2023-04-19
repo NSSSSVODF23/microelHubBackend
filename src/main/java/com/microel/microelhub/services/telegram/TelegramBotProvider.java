@@ -10,6 +10,8 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.BotSession;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
+import java.util.concurrent.Executors;
+
 import static java.lang.Thread.sleep;
 
 @Slf4j
@@ -34,12 +36,13 @@ public class TelegramBotProvider extends TelegramBotsApi {
             statedApiService.logStatusChange(Platform.TELEGRAM, "API инициализирован успешно");
         }catch (TelegramApiException e){
             statedApiService.logStatusChange(Platform.TELEGRAM, "API не удалось зарегистрировать, нет доступа к интернету или реквизиты не верны");
-//            Executors.newSingleThreadExecutor().execute(()->{
-//                try {
-//                    sleep(60000);
-//                } catch (InterruptedException ignored) {}
-//                initialization(bot);
-//            });
+            Executors.newSingleThreadExecutor().execute(()->{
+                try {
+                    sleep(60000);
+                    statedApiService.logStatusChange(Platform.TELEGRAM, "Повторная инициализация API");
+                    initialization(bot);
+                } catch (InterruptedException ignored) {}
+            });
         } catch (Exception e) {
             statedApiService.logStatusChange(Platform.TELEGRAM, e.getMessage());
 //            Executors.newSingleThreadExecutor().execute(()->{
