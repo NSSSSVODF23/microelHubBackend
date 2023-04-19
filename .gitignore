@@ -24,6 +24,7 @@ HELP.md
 /dist/
 /nbdist/
 /attachments/
+/target/attachments/
 /.nb-gradle/
 build/
 !**/src/main/**/build/
