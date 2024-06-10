@@ -8,12 +8,18 @@ import com.microel.microelhub.services.MessageSenderWrapper;
 import com.microel.microelhub.storage.ConfigurationDispatcher;
 import com.microel.microelhub.storage.entity.Configuration;
 import com.microel.microelhub.storage.entity.MessageAttachment;
+import com.microel.tdo.network.NetworkFile;
+import com.microel.tdo.network.NetworkMediaGroup;
+import com.microel.tdo.network.NetworkSendPhoto;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.RequestEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -23,17 +29,18 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageCa
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Slf4j
-@Component
-public class TelegramService extends TelegramLongPollingBot implements MessageSenderWrapper {
+@Service
+public class TelegramService implements MessageSenderWrapper {
 
+    private final RestTemplate restTemplate = new RestTemplateBuilder().build();
     private final MessageAggregatorService messageAggregatorService;
     private final ConfigurationDispatcher configurationDispatcher;
     private final AttachmentsController attachmentsController;
@@ -51,31 +58,25 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
             throw new Exception("Реквизиты для инициализации API пусты");
     }
 
-    @Override
     public String getBotUsername() {
         return config.getTlgBotUsername();
     }
 
-    @Override
     public String getBotToken() {
         return config.getTlgBotToken();
     }
 
-    @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage()) {
             Message message = update.getMessage();
             Message replyMessage = message.getReplyToMessage();
 
             User user = message.getFrom();
-            if (message.isCommand() && message.getText().equals("/start")) {
-                SendMessage sendMessage = new SendMessage(String.valueOf(message.getChatId()), "Вы можете написать сообщение этому боту, и в ближайшее время Вам ответит наш менеджер.");
-                try {
-                    execute(sendMessage);
-                } catch (TelegramApiException ignored) {
-                }
-                return;
-            }
+//            if (message.isCommand() && message.getText().equals("/start")) {
+//                SendMessage sendMessage = new SendMessage(String.valueOf(message.getChatId()), "Вы можете написать сообщение этому боту, и в ближайшее время Вам ответит наш менеджер.");
+//                execute(sendMessage);
+//                return;
+//            }
             String fullName = user.getFirstName();
             if (user.getLastName() != null) {
                 fullName += " " + user.getLastName();
@@ -85,6 +86,7 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
             if (replyMessage != null) {
                 mainMessage.unite(parseMessage(replyMessage));
             }
+
             messageAggregatorService.nextMessageFromUser(message.getChatId().toString(), mainMessage.text.toString(), message.getMessageId().toString(), fullName, Platform.TELEGRAM, mainMessage.getAttachments().toArray(MessageAttachment[]::new));
         } else if (update.hasEditedMessage()) {
             Message editedMessage = update.getEditedMessage();
@@ -137,15 +139,26 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
     @Override
     public String sendMessage(String userId, String text, List<MessageAttachment> imageAttachments) {
         if (imageAttachments.size() > 1) {
-            AtomicBoolean first = new AtomicBoolean(true);
-            SendMediaGroup mediaGroup = new SendMediaGroup(userId, imageAttachments.stream().map((a) -> {
-                InputMediaPhoto photo = new InputMediaPhoto();
-                photo.setMedia(attachmentsController.getFile(a), a.getAttachmentId().toString());
-                if (first.getAndSet(false)) {
-                    photo.setCaption(text);
+            List<NetworkFile> files  = new ArrayList<>();
+            for(int i = 0; i < imageAttachments.size(); i++)  {
+                final MessageAttachment attachment = imageAttachments.get(i);
+                java.io.File file = attachmentsController.getFile(attachment);
+                try {
+                    files.add(NetworkFile.from(file));
+                } catch (IOException ignored) {
                 }
-                return photo;
-            }).collect(Collectors.toList()));
+            }
+            final NetworkMediaGroup mediaGroup = NetworkMediaGroup.from(userId, text, files);
+//            imageAttachments.stream().map((a) -> {
+//                InputMediaPhoto photo = new InputMediaPhoto();
+//                photo.setMedia(attachmentsController.getFile(a), a.getAttachmentId().toString());
+//                if (first.getAndSet(false)) {
+//                    photo.setCaption(text);
+//                }
+//                return photo;
+//            }).collect(Collectors.toList())
+//            AtomicBoolean first = new AtomicBoolean(true);
+//            SendMediaGroup mediaGroup = new SendMediaGroup(userId, );
             try {
                 List<Message> messages = execute(mediaGroup);
                 return messages.get(0).getMessageId().toString();
@@ -156,9 +169,10 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
             try {
                 Message message;
                 if (imageAttachments.size() == 1) {
-                    SendPhoto photo = new SendPhoto(userId, new InputFile(attachmentsController.getFile(imageAttachments.get(0))));
-                    photo.setCaption(text);
-                    message = execute(photo);
+//                    new InputFile()
+//                    SendPhoto photo = new SendPhoto(userId, new InputFile());
+//                    photo.setCaption(text);
+                    message = execute(NetworkSendPhoto.from(userId, text, NetworkFile.from(attachmentsController.getFile(imageAttachments.get(0)))));
                 } else {
                     message = execute(new SendMessage(userId, text));
                 }
@@ -187,66 +201,37 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
     @Override
     public void deleteMessage(String userId, String chatMsgId) throws Exception {
         DeleteMessage deleteMessage = DeleteMessage.builder().chatId(userId).messageId(Integer.valueOf(chatMsgId)).build();
-        try {
-            execute(deleteMessage);
-        } catch (TelegramApiException e) {
-            throw new Exception("Не удалось отредактировать сообщение: " + e.getMessage());
-        }
+        execute(deleteMessage);
     }
 
     private MessageAttachment saveAttachment(PhotoSize photo) {
         GetFile getFile = new GetFile(photo.getFileId());
-        try {
-            File file = execute(getFile);
-            return attachmentsController.downloadAndSave(file.getFileUrl(getBotToken()), AttachmentType.PHOTO);
-        } catch (TelegramApiException e) {
-            log.warn("Не удалось получить ссылку на фото от Telegram API");
-        }
-        return null;
+        String url = execute(getFile);
+        return attachmentsController.downloadAndSave(url, AttachmentType.PHOTO);
     }
 
     private MessageAttachment saveAttachment(Video video) {
         GetFile getFile = new GetFile(video.getFileId());
-        try {
-            File file = execute(getFile);
-            return attachmentsController.downloadAndSave(file.getFileUrl(getBotToken()), AttachmentType.VIDEO, video.getDuration());
-        } catch (TelegramApiException e) {
-            log.warn("Не удалось получить ссылку на видео от Telegram API");
-        }
-        return null;
+        String url = execute(getFile);
+        return attachmentsController.downloadAndSave(url, AttachmentType.VIDEO, video.getDuration());
     }
 
     private MessageAttachment saveAttachment(VideoNote video) {
         GetFile getFile = new GetFile(video.getFileId());
-        try {
-            File file = execute(getFile);
-            return attachmentsController.downloadAndSave(file.getFileUrl(getBotToken()), AttachmentType.VIDEO, video.getDuration());
-        } catch (TelegramApiException e) {
-            log.warn("Не удалось получить ссылку на видео от Telegram API");
-        }
-        return null;
+        String url = execute(getFile);
+        return attachmentsController.downloadAndSave(url, AttachmentType.VIDEO, video.getDuration());
     }
 
     private MessageAttachment saveAttachment(Audio audio) {
         GetFile getFile = new GetFile(audio.getFileId());
-        try {
-            File file = execute(getFile);
-            return attachmentsController.downloadAndSave(file.getFileUrl(getBotToken()), AttachmentType.AUDIO, audio.getDuration());
-        } catch (TelegramApiException e) {
-            log.warn("Не удалось получить ссылку на аудио от Telegram API");
-        }
-        return null;
+        String url = execute(getFile);
+        return attachmentsController.downloadAndSave(url, AttachmentType.AUDIO, audio.getDuration());
     }
 
     private MessageAttachment saveAttachment(Voice audio) {
         GetFile getFile = new GetFile(audio.getFileId());
-        try {
-            File file = execute(getFile);
-            return attachmentsController.downloadAndSave(file.getFileUrl(getBotToken()), AttachmentType.AUDIO, audio.getDuration());
-        } catch (TelegramApiException e) {
-            log.warn("Не удалось получить ссылку на аудио от Telegram API");
-        }
-        return null;
+        String url = execute(getFile);
+        return attachmentsController.downloadAndSave(url, AttachmentType.AUDIO, audio.getDuration());
     }
 
     public void sendNotification(String text) {
@@ -260,6 +245,52 @@ public class TelegramService extends TelegramLongPollingBot implements MessageSe
         } catch (Exception ignored) {
 
         }
+    }
+
+    private Message execute(SendMessage message) {
+        RequestEntity.BodyBuilder request = RequestEntity.post(url("send-message"));
+        return restTemplate.exchange(request.body(message), new ParameterizedTypeReference<Message>() {
+        }).getBody();
+    }
+
+    private List<Message> execute(NetworkMediaGroup message) {
+        RequestEntity.BodyBuilder request = RequestEntity.post(url("send-media-group"));
+        return restTemplate.exchange(request.body(message), new ParameterizedTypeReference<List<Message>>() {
+        }).getBody();
+    }
+
+    private Message execute(NetworkSendPhoto message) {
+        RequestEntity.BodyBuilder request = RequestEntity.post(url("send-photo"));
+        return restTemplate.exchange(request.body(message), new ParameterizedTypeReference<Message>() {
+        }).getBody();
+    }
+
+    private Message execute(EditMessageText message) {
+        RequestEntity.BodyBuilder request = RequestEntity.post(url("edit-message-text"));
+        return restTemplate.exchange(request.body(message), new ParameterizedTypeReference<Message>() {
+        }).getBody();
+    }
+
+    private Message execute(EditMessageCaption message) {
+        RequestEntity.BodyBuilder request = RequestEntity.post(url("edit-message-caption"));
+        return restTemplate.exchange(request.body(message), new ParameterizedTypeReference<Message>() {
+        }).getBody();
+    }
+
+    private Message execute(DeleteMessage message) {
+        RequestEntity.BodyBuilder request = RequestEntity.post(url("delete-message"));
+        return restTemplate.exchange(request.body(message), new ParameterizedTypeReference<Message>() {
+        }).getBody();
+    }
+
+    private String execute(GetFile getFile) {
+        RequestEntity.BodyBuilder request = RequestEntity.post(url("get-file"));
+        return restTemplate.exchange(request.body(getFile), String.class).getBody();
+    }
+
+    private String url(String... params) {
+//        return "http://10.128.227.39:8080/api/public/telegram/" + String.join("/", params);
+        return "http://localhost:8080/api/public/telegram/" + String.join("/", params);
     }
 
     @Getter

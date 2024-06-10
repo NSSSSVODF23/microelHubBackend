@@ -18,9 +18,19 @@
     </properties>
     <dependencies>
         <dependency>
+            <groupId>com.microel</groupId>
+            <artifactId>tdo</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.auth0</groupId>
             <artifactId>java-jwt</artifactId>
             <version>4.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.15.2</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

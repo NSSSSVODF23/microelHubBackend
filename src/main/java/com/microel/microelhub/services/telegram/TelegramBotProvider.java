@@ -24,33 +24,33 @@ public class TelegramBotProvider extends TelegramBotsApi {
             super(DefaultBotSession.class);
         this.statedApiService = statedApiService;
         statedApiService.logCreated(Platform.TELEGRAM);
-        configurationDispatcher.addChangeConfigurationHandler("telegram", ()->initialization(bot));
-        initialization(bot);
+//        configurationDispatcher.addChangeConfigurationHandler("telegram", ()->initialization(bot));
+//        initialization(bot);
     }
 
-    private void initialization(TelegramService bot){
-        try{
-            if(botSession != null && botSession.isRunning()) botSession.stop();
-            bot.updateCredentials();
-            botSession = registerBot(bot);
-            statedApiService.logStatusChange(Platform.TELEGRAM, "API инициализирован успешно");
-        }catch (TelegramApiException e){
-            statedApiService.logStatusChange(Platform.TELEGRAM, "API не удалось зарегистрировать, нет доступа к интернету или реквизиты не верны");
-            Executors.newSingleThreadExecutor().execute(()->{
-                try {
-                    sleep(60000);
-                    statedApiService.logStatusChange(Platform.TELEGRAM, "Повторная инициализация API");
-                    initialization(bot);
-                } catch (InterruptedException ignored) {}
-            });
-        } catch (Exception e) {
-            statedApiService.logStatusChange(Platform.TELEGRAM, e.getMessage());
+//    private void initialization(TelegramService bot){
+//        try{
+//            if(botSession != null && botSession.isRunning()) botSession.stop();
+//            bot.updateCredentials();
+//            botSession = registerBot(bot);
+//            statedApiService.logStatusChange(Platform.TELEGRAM, "API инициализирован успешно");
+//        }catch (TelegramApiException e){
+//            statedApiService.logStatusChange(Platform.TELEGRAM, "API не удалось зарегистрировать, нет доступа к интернету или реквизиты не верны");
 //            Executors.newSingleThreadExecutor().execute(()->{
 //                try {
 //                    sleep(60000);
+//                    statedApiService.logStatusChange(Platform.TELEGRAM, "Повторная инициализация API");
+////                    initialization(bot);
 //                } catch (InterruptedException ignored) {}
-//                initialization(bot);
 //            });
-        }
-    }
+//        } catch (Exception e) {
+//            statedApiService.logStatusChange(Platform.TELEGRAM, e.getMessage());
+////            Executors.newSingleThreadExecutor().execute(()->{
+////                try {
+////                    sleep(60000);
+////                } catch (InterruptedException ignored) {}
+////                initialization(bot);
+////            });
+//        }
+//    }
 }

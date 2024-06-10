@@ -20,6 +20,7 @@ import com.microel.microelhub.storage.entity.Configuration;
 import com.microel.microelhub.storage.entity.Message;
 import com.microel.microelhub.storage.entity.MessageAttachment;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,7 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -96,6 +98,14 @@ public class MessageAggregatorService {
         }
         telegramService.sendNotification("\uD83D\uDCAC Новый чат \n"
                 + chat.getUser().getName() + " из " + platform.getLocalized());
+    }
+
+    public UUID initializeChat(String chatId, Platform platform, @Nullable String chatName)  {
+        Chat chat = chatDispatcher.getLastByUserId(chatId, platform);
+        if (chat != null && chat.getActive()) return chat.getChatId();
+        Chat newChat = chatDispatcher.create(chatId, chatName == null ? chatId : chatName, platform);
+        chatWS.sendBroadcast(ListUpdateWrapper.of(UpdateType.ADD, newChat));
+        return newChat.getChatId();
     }
 
     public void nextMessageFromUser(String userId, String text, String chatMsgId, String name, Platform platform, MessageAttachment... messageAttachment) {
