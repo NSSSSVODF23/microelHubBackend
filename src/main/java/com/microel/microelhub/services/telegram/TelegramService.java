@@ -289,8 +289,8 @@ public class TelegramService implements MessageSenderWrapper {
     }
 
     private String url(String... params) {
-//        return "http://10.128.227.39:8080/api/public/telegram/" + String.join("/", params);
-        return "http://localhost:8080/api/public/telegram/" + String.join("/", params);
+        return "http://10.128.227.39:8080/api/public/telegram/" + String.join("/", params);
+//        return "http://localhost:8080/api/public/telegram/" + String.join("/", params);
     }
 
     @Getter
